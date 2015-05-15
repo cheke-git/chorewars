@@ -1,0 +1,26 @@
+body,
+html {
+  height: 100%;
+}
+.cw-site-wrapper {
+  height: 100%;
+  background: #000033;
+}
+.cw-row-main-container {
+  height: 400px;
+  position: relative;
+  top: 50%;
+  margin-top: -200px;
+}
+.cw-col-main-container {
+  min-width: 400px;
+}
+.cw-hgt-lg-separator {
+  margin: 20px 0px;
+}
+.cw-logo {
+  height: 80px;
+  background-image: url(../images/cw-logo-splash.png);
+  background-position: center center;
+  background-repeat: no-repeat;
+}
