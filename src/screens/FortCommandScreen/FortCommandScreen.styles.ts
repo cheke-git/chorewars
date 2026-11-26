@@ -5,7 +5,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 export const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   lockedCenter: {
     flex: 1,

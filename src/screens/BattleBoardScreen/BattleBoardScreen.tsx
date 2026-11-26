@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { TaskArtBadge } from '@/components/TaskArtBadge/TaskArtBadge';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
@@ -117,7 +118,8 @@ export function BattleBoardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -349,6 +351,7 @@ export function BattleBoardScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }

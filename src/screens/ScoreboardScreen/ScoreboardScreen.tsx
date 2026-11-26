@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getRankInfo } from '@/shared/types';
@@ -27,7 +28,8 @@ export function ScoreboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -166,6 +168,7 @@ export function ScoreboardScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }

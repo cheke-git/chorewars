@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandLogo } from '@/components/BrandLogo/BrandLogo';
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
@@ -172,7 +173,8 @@ export function FortWizardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <View style={styles.topRow}>
@@ -482,6 +484,7 @@ export function FortWizardScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }

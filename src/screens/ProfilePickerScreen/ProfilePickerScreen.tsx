@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandLogo } from '@/components/BrandLogo/BrandLogo';
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getRankInfo } from '@/shared/types';
@@ -25,7 +26,8 @@ export function ProfilePickerScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.container}>
           <BrandLogo />
@@ -88,6 +90,7 @@ export function ProfilePickerScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }

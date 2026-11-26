@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PinModal } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
@@ -79,32 +80,34 @@ export function FortCommandScreen() {
 
   if (!cochUnlocked) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.lockedCenter}>
-          <View style={styles.lockedCard}>
-            <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
-            <Text style={styles.lockedTitle}>Fort Command</Text>
-            <Text style={styles.lockedDesc}>
-              Protected by your 4-digit Commander in Chief PIN so recruits can&apos;t edit missions
-              or rewards.
-            </Text>
-            <PrimaryButton
-              label="Unlock with CoCh PIN"
-              variant="primary"
-              onPress={() => setPinModalOpen(true)}
-            />
+      <FortBackground>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.lockedCenter}>
+            <View style={styles.lockedCard}>
+              <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
+              <Text style={styles.lockedTitle}>Fort Command</Text>
+              <Text style={styles.lockedDesc}>
+                Protected by your 4-digit Commander in Chief PIN so recruits can&apos;t edit missions
+                or rewards.
+              </Text>
+              <PrimaryButton
+                label="Unlock with CoCh PIN"
+                variant="primary"
+                onPress={() => setPinModalOpen(true)}
+              />
+            </View>
           </View>
-        </View>
 
-        <PinModal
-          visible={pinModalOpen}
-          onCancel={() => setPinModalOpen(false)}
-          onVerify={async (pin) => {
-            await verifyCochPin(pin);
-            setPinModalOpen(false);
-          }}
-        />
-      </SafeAreaView>
+          <PinModal
+            visible={pinModalOpen}
+            onCancel={() => setPinModalOpen(false)}
+            onVerify={async (pin) => {
+              await verifyCochPin(pin);
+              setPinModalOpen(false);
+            }}
+          />
+        </SafeAreaView>
+      </FortBackground>
     );
   }
 
@@ -115,7 +118,8 @@ export function FortCommandScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <View style={styles.topHeader}>
@@ -383,6 +387,7 @@ export function FortCommandScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }

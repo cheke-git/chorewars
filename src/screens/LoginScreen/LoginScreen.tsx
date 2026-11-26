@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandLogo } from '@/components/BrandLogo/BrandLogo';
+import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
@@ -79,7 +80,8 @@ export function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <FortBackground>
+      <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -158,6 +160,7 @@ export function LoginScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </FortBackground>
   );
 }
