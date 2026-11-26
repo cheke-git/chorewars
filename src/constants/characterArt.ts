@@ -14,8 +14,7 @@ export interface CharacterPreset {
   bgColor: string;
   defaultIsAdult: boolean;
   /**
-   * Drop promoted PNGs from `chorewars-art` into
-   * `assets/images/characters/{archetype}-t{1|2|3}.png` and wire them here.
+   * Promoted PNGs from `chorewars-art` (`assets/images/characters/{archetype}-t{1|2|3}.png`).
    * Adding `4`, `5`, etc. later requires zero DB or UI changes.
    */
   tiers: Partial<Record<number, ImageSourcePropType>>;
@@ -29,7 +28,11 @@ export const AVATAR_PRESETS: CharacterPreset[] = [
     badge: 'PF',
     bgColor: '#FF5A00',
     defaultIsAdult: true,
-    tiers: {},
+    tiers: {
+      1: require('@/assets/images/characters/parent-female-t1.png'),
+      2: require('@/assets/images/characters/parent-female-t2.png'),
+      3: require('@/assets/images/characters/parent-female-t3.png'),
+    },
   },
   {
     key: 'parent-male',
@@ -38,7 +41,11 @@ export const AVATAR_PRESETS: CharacterPreset[] = [
     badge: 'PM',
     bgColor: '#2563EB',
     defaultIsAdult: true,
-    tiers: {},
+    tiers: {
+      1: require('@/assets/images/characters/parent-male-t1.png'),
+      2: require('@/assets/images/characters/parent-male-t2.png'),
+      3: require('@/assets/images/characters/parent-male-t3.png'),
+    },
   },
   {
     key: 'kid-female',
@@ -47,7 +54,11 @@ export const AVATAR_PRESETS: CharacterPreset[] = [
     badge: 'KF',
     bgColor: '#DB2777',
     defaultIsAdult: false,
-    tiers: {},
+    tiers: {
+      1: require('@/assets/images/characters/kid-female-t1.png'),
+      2: require('@/assets/images/characters/kid-female-t2.png'),
+      3: require('@/assets/images/characters/kid-female-t3.png'),
+    },
   },
   {
     key: 'kid-male',
@@ -56,7 +67,11 @@ export const AVATAR_PRESETS: CharacterPreset[] = [
     badge: 'KM',
     bgColor: '#0D9488',
     defaultIsAdult: false,
-    tiers: {},
+    tiers: {
+      1: require('@/assets/images/characters/kid-male-t1.png'),
+      2: require('@/assets/images/characters/kid-male-t2.png'),
+      3: require('@/assets/images/characters/kid-male-t3.png'),
+    },
   },
 ];
 

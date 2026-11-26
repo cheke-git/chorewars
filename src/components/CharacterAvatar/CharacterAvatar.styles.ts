@@ -16,21 +16,24 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.22)',
     overflow: 'hidden',
   },
+  portraitBackdrop: {
+    backgroundColor: Colors.surfaceElevated,
+  },
   sm: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
   },
   md: {
-    width: 52,
-    height: 52,
+    width: 58,
+    height: 58,
   },
   lg: {
-    width: 76,
-    height: 76,
+    width: 92,
+    height: 92,
   },
   portrait: {
-    width: '100%',
-    height: '100%',
+    width: '94%',
+    height: '94%',
   },
   initials: {
     color: Colors.textPrimary,

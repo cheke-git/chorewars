@@ -4,12 +4,12 @@ import { Radius } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   image: {
-    width: 64,
-    height: 64,
+    width: 78,
+    height: 78,
   },
   imageSm: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
   },
   placeholder: {
     width: 64,

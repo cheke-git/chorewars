@@ -51,11 +51,11 @@ export function CharacterAvatar({
           size === 'sm' && styles.sm,
           size === 'md' && styles.md,
           size === 'lg' && styles.lg,
-          { backgroundColor: preset.bgColor },
+          portraitSource ? styles.portraitBackdrop : { backgroundColor: preset.bgColor },
           borderColor ? { borderColor, borderWidth: highlighted || rank.artTier > 1 ? 3 : 2 } : null,
         ]}>
         {portraitSource ? (
-          <Image source={portraitSource} style={styles.portrait} resizeMode="cover" />
+          <Image source={portraitSource} style={styles.portrait} resizeMode="contain" />
         ) : (
           <Text
             style={[
