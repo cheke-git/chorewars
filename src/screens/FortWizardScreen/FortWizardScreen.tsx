@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandLogo } from '@/components/BrandLogo/BrandLogo';
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { CharacterPicker } from '@/components/CharacterPicker/CharacterPicker';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
@@ -309,23 +310,8 @@ export function FortWizardScreen() {
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Commander Character</Text>
-                <View style={styles.chipRow}>
-                  {AVATAR_PRESETS.filter((p) => p.defaultIsAdult).map((preset) => (
-                    <Pressable
-                      key={preset.key}
-                      onPress={() => setCochAvatar(preset.key)}
-                      style={[styles.chip, cochAvatar === preset.key && styles.chipActive]}>
-                      <Text
-                        style={[
-                          styles.chipText,
-                          cochAvatar === preset.key && styles.chipTextActive,
-                        ]}>
-                        {preset.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <Text style={styles.label}>Choose Character</Text>
+                <CharacterPicker selectedKey={cochAvatar} onSelect={setCochAvatar} />
               </View>
 
               <View style={styles.fieldGroup}>
@@ -372,27 +358,9 @@ export function FortWizardScreen() {
                 />
               </View>
 
-              <View style={styles.chipRow}>
-                {AVATAR_PRESETS.map((preset) => (
-                  <Pressable
-                    key={preset.key}
-                    onPress={() => {
-                      setNewMemberAvatar(preset.key);
-                      setNewMemberIsAdult(preset.defaultIsAdult);
-                    }}
-                    style={[
-                      styles.chip,
-                      newMemberAvatar === preset.key && styles.chipActive,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.chipText,
-                        newMemberAvatar === preset.key && styles.chipTextActive,
-                      ]}>
-                      {preset.shortLabel}
-                    </Text>
-                  </Pressable>
-                ))}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Choose Character</Text>
+                <CharacterPicker selectedKey={newMemberAvatar} onSelect={setNewMemberAvatar} />
               </View>
 
               <View style={styles.toggleRow}>

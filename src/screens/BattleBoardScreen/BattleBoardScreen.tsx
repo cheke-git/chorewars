@@ -147,6 +147,7 @@ export function BattleBoardScreen() {
               avatarUrl={activeProfile.avatarUrl}
               xpTotal={activeProfile.xpTotal}
               size="md"
+              variant="hero"
               highlighted={activeProfile.role === 'coch'}
               showTierBadge
             />
@@ -156,10 +157,21 @@ export function BattleBoardScreen() {
               <Text style={styles.rankText}>
                 {rank.title} • {activeProfile.xpTotal} XP
               </Text>
+              <View style={styles.headerProgressTrack}>
+                <View
+                  style={[
+                    styles.headerProgressFill,
+                    {
+                      width: `${Math.max(6, Math.round(rank.progress * 100))}%`,
+                      backgroundColor: rank.frameColor,
+                    },
+                  ]}
+                />
+              </View>
             </View>
             {lockedProfileId ? (
               <View style={styles.lockedBadge}>
-                <Text style={styles.lockedBadgeText}>Device Locked</Text>
+                <Text style={styles.lockedBadgeText}>Locked</Text>
               </View>
             ) : (
               <Pressable onPress={() => router.push('/profiles')} style={styles.switchBtn}>
@@ -307,55 +319,59 @@ export function BattleBoardScreen() {
                         inProgressByMe && styles.gridCardInProgress,
                         isCooldown && styles.gridCardCooldown,
                       ]}>
-                      <View style={styles.gridTopBar}>
-                        {assignedProfile ? (
-                          <View style={styles.assigneeChip}>
-                            <Text style={styles.assigneeChipText} numberOfLines={1}>
-                              {assignedProfile.name}
+                      <View style={styles.gridArtStage}>
+                        <TaskArtBadge categoryKey={task.categoryKey} size="hero" />
+
+                        <View style={styles.gridTopOverlay}>
+                          {assignedProfile ? (
+                            <View style={styles.assigneeChip}>
+                              <Text style={styles.assigneeChipText} numberOfLines={1}>
+                                {assignedProfile.name}
+                              </Text>
+                            </View>
+                          ) : (
+                            <View style={styles.cadencePill}>
+                              <Text style={styles.cadenceText}>
+                                {formatRecurrence(task.recurrenceType, task.cooldownDays)}
+                              </Text>
+                            </View>
+                          )}
+                          <Text style={styles.xpBadgeCompact}>+{task.xp}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.gridBody}>
+                        <Text style={styles.gridTaskTitle} numberOfLines={2}>
+                          {task.title}
+                        </Text>
+
+                        {task.isAvailable ? (
+                          <View style={styles.gridActions}>
+                            <Pressable
+                              disabled={isBusy}
+                              onPress={() => handleStart(task.id)}
+                              style={styles.gridStartBtn}>
+                              <Text style={styles.gridStartText}>{isBusy ? '...' : 'Start'}</Text>
+                            </Pressable>
+                            <Pressable
+                              disabled={isBusy}
+                              onPress={() => handleComplete(task.id, task.xp)}
+                              style={styles.gridDoneBtn}>
+                              <Text style={styles.gridDoneText}>{isBusy ? '...' : 'Done'}</Text>
+                            </Pressable>
+                          </View>
+                        ) : task.activeRun ? (
+                          <View style={styles.gridStatusPill}>
+                            <Text style={styles.gridStatusText} numberOfLines={1}>
+                              {inProgressByMe ? 'Active ↑' : task.activeRun.profileName}
                             </Text>
                           </View>
                         ) : (
-                          <Text style={styles.cadenceText}>
-                            {formatRecurrence(task.recurrenceType, task.cooldownDays)}
-                          </Text>
+                          <View style={styles.gridCooldownPill}>
+                            <Text style={styles.gridCooldownText}>Done ✓</Text>
+                          </View>
                         )}
-                        <Text style={styles.xpBadgeCompact}>+{task.xp}</Text>
                       </View>
-
-                      <View style={styles.gridArtWrap}>
-                        <TaskArtBadge categoryKey={task.categoryKey} size="md" />
-                      </View>
-
-                      <Text style={styles.gridTaskTitle} numberOfLines={2}>
-                        {task.title}
-                      </Text>
-
-                      {task.isAvailable ? (
-                        <View style={styles.gridActions}>
-                          <Pressable
-                            disabled={isBusy}
-                            onPress={() => handleStart(task.id)}
-                            style={styles.gridStartBtn}>
-                            <Text style={styles.gridStartText}>{isBusy ? '...' : 'Start'}</Text>
-                          </Pressable>
-                          <Pressable
-                            disabled={isBusy}
-                            onPress={() => handleComplete(task.id, task.xp)}
-                            style={styles.gridDoneBtn}>
-                            <Text style={styles.gridDoneText}>{isBusy ? '...' : 'Done'}</Text>
-                          </Pressable>
-                        </View>
-                      ) : task.activeRun ? (
-                        <View style={styles.gridStatusPill}>
-                          <Text style={styles.gridStatusText} numberOfLines={1}>
-                            {inProgressByMe ? 'Active ↑' : task.activeRun.profileName}
-                          </Text>
-                        </View>
-                      ) : (
-                        <View style={styles.gridCooldownPill}>
-                          <Text style={styles.gridCooldownText}>Done ✓</Text>
-                        </View>
-                      )}
                     </View>
                   );
                 })}

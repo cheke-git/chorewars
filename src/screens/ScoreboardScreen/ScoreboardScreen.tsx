@@ -61,7 +61,9 @@ export function ScoreboardScreen() {
                     avatarUrl={profile.avatarUrl}
                     xpTotal={profile.xpTotal}
                     size="sm"
+                    variant="hero"
                     highlighted={index === 0}
+                    showTierBadge
                   />
                   <View style={styles.leaderMeta}>
                     <View style={styles.leaderNameRow}>

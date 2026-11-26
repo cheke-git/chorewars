@@ -56,7 +56,8 @@ export function ProfilePickerScreen() {
                     avatarKey={profile.avatarKey}
                     avatarUrl={profile.avatarUrl}
                     xpTotal={profile.xpTotal}
-                    size="lg"
+                    size="xl"
+                    variant="hero"
                     highlighted={profile.role === 'coch'}
                     showTierBadge
                   />

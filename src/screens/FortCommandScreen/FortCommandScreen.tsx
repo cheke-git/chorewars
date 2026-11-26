@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CharacterPicker } from '@/components/CharacterPicker/CharacterPicker';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PinModal } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
@@ -323,26 +324,8 @@ export function FortCommandScreen() {
               placeholderTextColor={Colors.textMuted}
               style={styles.input}
             />
-            <Text style={styles.label}>Character Archetype</Text>
-            <View style={styles.chipRow}>
-              {AVATAR_PRESETS.map((preset) => (
-                <Pressable
-                  key={preset.key}
-                  onPress={() => {
-                    setProfileAvatarKey(preset.key);
-                    setProfileIsAdult(preset.defaultIsAdult);
-                  }}
-                  style={[styles.chip, profileAvatarKey === preset.key && styles.chipActive]}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      profileAvatarKey === preset.key && styles.chipTextActive,
-                    ]}>
-                    {preset.shortLabel}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <Text style={styles.label}>Choose Character</Text>
+            <CharacterPicker selectedKey={profileAvatarKey} onSelect={setProfileAvatarKey} />
             <View style={styles.toggleRow}>
               <Text style={styles.label}>Adult Profile?</Text>
               <Switch

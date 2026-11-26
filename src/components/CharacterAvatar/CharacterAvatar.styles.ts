@@ -8,32 +8,70 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circle: {
+  badgeBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.full,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     overflow: 'hidden',
   },
   portraitBackdrop: {
     backgroundColor: Colors.surfaceElevated,
   },
   sm: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
   },
   md: {
-    width: 58,
-    height: 58,
+    width: 68,
+    height: 68,
   },
   lg: {
-    width: 92,
-    height: 92,
+    width: 104,
+    height: 104,
   },
-  portrait: {
-    width: '94%',
-    height: '94%',
+  xl: {
+    width: 140,
+    height: 140,
+  },
+  badgePortrait: {
+    width: '116%',
+    height: '116%',
+  },
+  heroWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  heroSm: {
+    width: 84,
+    height: 84,
+  },
+  heroMd: {
+    width: 104,
+    height: 104,
+  },
+  heroLg: {
+    width: 128,
+    height: 128,
+  },
+  heroXl: {
+    width: 158,
+    height: 158,
+  },
+  heroGlow: {
+    position: 'absolute',
+    bottom: 4,
+    width: '84%',
+    height: '74%',
+    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(20, 20, 99, 0.72)',
+    borderWidth: 2,
+  },
+  heroImage: {
+    width: '116%',
+    height: '116%',
   },
   initials: {
     color: Colors.textPrimary,
@@ -41,10 +79,10 @@ export const styles = StyleSheet.create({
     fontSize: 18,
   },
   initialsSm: {
-    fontSize: 13,
+    fontSize: 14,
   },
   initialsLg: {
-    fontSize: 26,
+    fontSize: 28,
   },
   tierBadge: {
     position: 'absolute',
@@ -53,6 +91,16 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.full,
     paddingHorizontal: 6,
     paddingVertical: 1,
+    borderWidth: 1.5,
+    borderColor: Colors.background,
+  },
+  tierBadgeHero: {
+    position: 'absolute',
+    bottom: 0,
+    right: 2,
+    borderRadius: Radius.full,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderWidth: 1.5,
     borderColor: Colors.background,
   },

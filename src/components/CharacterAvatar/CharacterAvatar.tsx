@@ -13,7 +13,8 @@ interface CharacterAvatarProps {
   avatarKey: string;
   avatarUrl?: string | null;
   xpTotal?: number;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'badge' | 'hero';
   highlighted?: boolean;
   showTierBadge?: boolean;
 }
@@ -24,6 +25,7 @@ export function CharacterAvatar({
   avatarUrl,
   xpTotal = 0,
   size = 'md',
+  variant = 'badge',
   highlighted = false,
   showTierBadge = false,
 }: CharacterAvatarProps) {
@@ -41,27 +43,56 @@ export function CharacterAvatar({
     .toUpperCase()
     .slice(0, 2);
 
-  const borderColor = highlighted ? rank.frameColor : rank.artTier > 1 ? rank.frameColor : undefined;
+  if (variant === 'hero' && portraitSource) {
+    return (
+      <View
+        style={[
+          styles.heroWrapper,
+          size === 'sm' && styles.heroSm,
+          size === 'md' && styles.heroMd,
+          size === 'lg' && styles.heroLg,
+          size === 'xl' && styles.heroXl,
+        ]}>
+        <View
+          style={[
+            styles.heroGlow,
+            {
+              borderColor: highlighted || rank.artTier > 1 ? rank.frameColor : 'rgba(255,255,255,0.12)',
+            },
+          ]}
+        />
+        <Image source={portraitSource} style={styles.heroImage} resizeMode="contain" />
+        {showTierBadge ? (
+          <View style={[styles.tierBadgeHero, { backgroundColor: rank.frameColor }]}>
+            <Text style={styles.tierBadgeText}>T{rank.artTier}</Text>
+          </View>
+        ) : null}
+      </View>
+    );
+  }
+
+  const borderColor = highlighted || rank.artTier > 1 ? rank.frameColor : undefined;
 
   return (
     <View style={styles.wrapper}>
       <View
         style={[
-          styles.circle,
+          styles.badgeBox,
           size === 'sm' && styles.sm,
           size === 'md' && styles.md,
           size === 'lg' && styles.lg,
+          size === 'xl' && styles.xl,
           portraitSource ? styles.portraitBackdrop : { backgroundColor: preset.bgColor },
-          borderColor ? { borderColor, borderWidth: highlighted || rank.artTier > 1 ? 3 : 2 } : null,
+          borderColor ? { borderColor, borderWidth: 2.5 } : null,
         ]}>
         {portraitSource ? (
-          <Image source={portraitSource} style={styles.portrait} resizeMode="contain" />
+          <Image source={portraitSource} style={styles.badgePortrait} resizeMode="contain" />
         ) : (
           <Text
             style={[
               styles.initials,
               size === 'sm' && styles.initialsSm,
-              size === 'lg' && styles.initialsLg,
+              (size === 'lg' || size === 'xl') && styles.initialsLg,
             ]}>
             {initials || preset.badge}
           </Text>
