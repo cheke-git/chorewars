@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 640,
-    gap: Spacing.lg,
+    gap: Spacing.md,
     paddingBottom: Spacing.xl,
   },
   headerCard: {
@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Colors.textPrimary,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
   },
   activeCard: {
@@ -103,6 +103,27 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: Spacing.sm,
+  },
+  activeTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  activeTaskTitle: {
+    color: Colors.textPrimary,
+    fontSize: Typography.body,
+    fontWeight: '700',
+    flex: 1,
+  },
+  xpBadge: {
+    color: Colors.brandOrange,
+    fontSize: Typography.label,
+    fontWeight: '800',
+    backgroundColor: 'rgba(255, 90, 0, 0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
   },
   commentInput: {
     backgroundColor: Colors.background,
@@ -117,6 +138,33 @@ export const styles = StyleSheet.create({
   activeActions: {
     flexDirection: 'row',
     gap: Spacing.sm,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    backgroundColor: Colors.brandOrange,
+    borderRadius: Radius.md,
+    paddingVertical: 11,
+    alignItems: 'center',
+  },
+  primaryActionText: {
+    color: Colors.textPrimary,
+    fontSize: Typography.label,
+    fontWeight: '800',
+  },
+  secondaryActionBtn: {
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryActionText: {
+    color: Colors.textPrimary,
+    fontSize: Typography.label,
+    fontWeight: '700',
   },
   filterRow: {
     gap: Spacing.sm,
@@ -154,91 +202,126 @@ export const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: Typography.label,
   },
-  taskCard: {
+  missionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+  },
+  gridCard: {
+    width: '48.5%',
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
+    padding: 12,
+    gap: 8,
+    justifyContent: 'space-between',
   },
-  taskTopRow: {
+  gridCardInProgress: {
+    borderColor: Colors.brandOrange,
+  },
+  gridCardCooldown: {
+    opacity: 0.62,
+  },
+  gridTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    gap: 4,
   },
-  taskTitle: {
-    color: Colors.textPrimary,
-    fontSize: Typography.body,
+  cadenceText: {
+    color: Colors.textMuted,
+    fontSize: 11,
     fontWeight: '700',
-    flex: 1,
   },
-  xpBadge: {
+  assigneeChip: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: Radius.full,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    maxWidth: '64%',
+  },
+  assigneeChipText: {
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  xpBadgeCompact: {
     color: Colors.brandOrange,
-    fontSize: Typography.label,
+    fontSize: 12,
     fontWeight: '800',
-    backgroundColor: 'rgba(255, 90, 0, 0.14)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 90, 0, 0.16)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: Radius.full,
     overflow: 'hidden',
   },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-  },
-  metaPill: {
-    color: Colors.textSecondary,
-    backgroundColor: Colors.background,
-    borderRadius: Radius.sm,
-    paddingHorizontal: 8,
+  gridArtWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 4,
-    fontSize: Typography.caption,
-    fontWeight: '600',
-    overflow: 'hidden',
   },
-  taskActions: {
+  gridTaskTitle: {
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    minHeight: 34,
+    lineHeight: 17,
+  },
+  gridActions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: 6,
     marginTop: 2,
   },
-  primaryActionBtn: {
+  gridStartBtn: {
     flex: 1,
-    backgroundColor: Colors.brandOrange,
-    borderRadius: Radius.md,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  primaryActionText: {
-    color: Colors.textPrimary,
-    fontSize: Typography.label,
-    fontWeight: '800',
-  },
-  secondaryActionBtn: {
-    paddingHorizontal: Spacing.md,
     backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: Radius.md,
-    paddingVertical: 11,
+    borderRadius: Radius.sm,
+    paddingVertical: 8,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  secondaryActionText: {
+  gridStartText: {
     color: Colors.textPrimary,
-    fontSize: Typography.label,
+    fontSize: 12,
     fontWeight: '700',
   },
-  statusNote: {
+  gridDoneBtn: {
+    flex: 1,
+    backgroundColor: Colors.brandOrange,
+    borderRadius: Radius.sm,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  gridDoneText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  gridStatusPill: {
+    backgroundColor: 'rgba(255, 90, 0, 0.16)',
+    borderRadius: Radius.sm,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  gridStatusText: {
     color: Colors.brandOrange,
-    fontSize: Typography.caption,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
   },
-  cooldownNote: {
+  gridCooldownPill: {
+    backgroundColor: Colors.background,
+    borderRadius: Radius.sm,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
+  gridCooldownText: {
     color: Colors.textMuted,
-    fontSize: Typography.caption,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

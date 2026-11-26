@@ -11,9 +11,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import { TaskArtBadge } from '@/components/TaskArtBadge/TaskArtBadge';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { formatRecurrence, getRankInfo } from '@/shared/types';
+import { formatRecurrence, getRankInfo, type ProfileDTO } from '@/shared/types';
 
 import { styles } from './BattleBoardScreen.styles';
 
@@ -38,18 +39,10 @@ export function BattleBoardScreen() {
   const [commentByTask, setCommentByTask] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState<string | null>(null);
 
-  const areaNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const area of fortState?.areas ?? []) {
-      map.set(area.id, area.name);
-    }
-    return map;
-  }, [fortState?.areas]);
-
-  const profileNameById = useMemo(() => {
-    const map = new Map<string, string>();
+  const profileById = useMemo(() => {
+    const map = new Map<string, ProfileDTO>();
     for (const p of fortState?.profiles ?? []) {
-      map.set(p.id, p.name);
+      map.set(p.id, p);
     }
     return map;
   }, [fortState?.profiles]);
@@ -173,8 +166,9 @@ export function BattleBoardScreen() {
                 const isBusy = busyTaskId === task.id;
                 return (
                   <View key={task.id} style={styles.activeCard}>
-                    <View style={styles.taskTopRow}>
-                      <Text style={styles.taskTitle}>{task.title}</Text>
+                    <View style={styles.activeTopRow}>
+                      <TaskArtBadge categoryKey={task.categoryKey} size="sm" />
+                      <Text style={styles.activeTaskTitle}>{task.title}</Text>
                       <Text style={styles.xpBadge}>+{task.xp} XP</Text>
                     </View>
                     <TextInput
@@ -209,7 +203,6 @@ export function BattleBoardScreen() {
           ) : null}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Menu — Areas</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -237,7 +230,7 @@ export function BattleBoardScreen() {
                     styles.filterChipText,
                     selectedFilter === FILTER_MINE && styles.filterChipTextActive,
                   ]}>
-                  Assigned to Me
+                  Mine
                 </Text>
               </Pressable>
 
@@ -277,72 +270,81 @@ export function BattleBoardScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Missions</Text>
             {filteredTasks.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Text style={styles.emptyText}>No missions in this view yet.</Text>
               </View>
             ) : (
-              filteredTasks.map((task) => {
-                const isBusy = busyTaskId === task.id;
-                const areaLabel = task.areaId ? (areaNameById.get(task.areaId) ?? 'Area') : 'General';
-                const assignedLabel = task.assignedProfileId
-                  ? profileNameById.get(task.assignedProfileId)
-                  : null;
-                const inProgressByMe = task.activeRun?.profileId === activeProfile.id;
+              <View style={styles.missionGrid}>
+                {filteredTasks.map((task) => {
+                  const isBusy = busyTaskId === task.id;
+                  const assignedProfile = task.assignedProfileId
+                    ? profileById.get(task.assignedProfileId) ?? null
+                    : null;
+                  const inProgressByMe = task.activeRun?.profileId === activeProfile.id;
+                  const isCooldown = !task.isAvailable && !task.activeRun;
 
-                return (
-                  <View key={task.id} style={styles.taskCard}>
-                    <View style={styles.taskTopRow}>
-                      <Text style={styles.taskTitle}>{task.title}</Text>
-                      <Text style={styles.xpBadge}>+{task.xp} XP</Text>
-                    </View>
+                  return (
+                    <View
+                      key={task.id}
+                      style={[
+                        styles.gridCard,
+                        inProgressByMe && styles.gridCardInProgress,
+                        isCooldown && styles.gridCardCooldown,
+                      ]}>
+                      <View style={styles.gridTopBar}>
+                        {assignedProfile ? (
+                          <View style={styles.assigneeChip}>
+                            <Text style={styles.assigneeChipText} numberOfLines={1}>
+                              {assignedProfile.name}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.cadenceText}>
+                            {formatRecurrence(task.recurrenceType, task.cooldownDays)}
+                          </Text>
+                        )}
+                        <Text style={styles.xpBadgeCompact}>+{task.xp}</Text>
+                      </View>
 
-                    <View style={styles.metaRow}>
-                      <Text style={styles.metaPill}>{areaLabel}</Text>
-                      <Text style={styles.metaPill}>
-                        {formatRecurrence(task.recurrenceType, task.cooldownDays)}
+                      <View style={styles.gridArtWrap}>
+                        <TaskArtBadge categoryKey={task.categoryKey} size="md" />
+                      </View>
+
+                      <Text style={styles.gridTaskTitle} numberOfLines={2}>
+                        {task.title}
                       </Text>
-                      {assignedLabel ? (
-                        <Text style={styles.metaPill}>For {assignedLabel}</Text>
+
+                      {task.isAvailable ? (
+                        <View style={styles.gridActions}>
+                          <Pressable
+                            disabled={isBusy}
+                            onPress={() => handleStart(task.id)}
+                            style={styles.gridStartBtn}>
+                            <Text style={styles.gridStartText}>{isBusy ? '...' : 'Start'}</Text>
+                          </Pressable>
+                          <Pressable
+                            disabled={isBusy}
+                            onPress={() => handleComplete(task.id, task.xp)}
+                            style={styles.gridDoneBtn}>
+                            <Text style={styles.gridDoneText}>{isBusy ? '...' : 'Done'}</Text>
+                          </Pressable>
+                        </View>
+                      ) : task.activeRun ? (
+                        <View style={styles.gridStatusPill}>
+                          <Text style={styles.gridStatusText} numberOfLines={1}>
+                            {inProgressByMe ? 'Active ↑' : task.activeRun.profileName}
+                          </Text>
+                        </View>
                       ) : (
-                        <Text style={styles.metaPill}>Open</Text>
+                        <View style={styles.gridCooldownPill}>
+                          <Text style={styles.gridCooldownText}>Done ✓</Text>
+                        </View>
                       )}
                     </View>
-
-                    {task.isAvailable ? (
-                      <View style={styles.taskActions}>
-                        <Pressable
-                          disabled={isBusy}
-                          onPress={() => handleStart(task.id)}
-                          style={styles.secondaryActionBtn}>
-                          <Text style={styles.secondaryActionText}>
-                            {isBusy ? '...' : 'Start'}
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          disabled={isBusy}
-                          onPress={() => handleComplete(task.id, task.xp)}
-                          style={styles.primaryActionBtn}>
-                          <Text style={styles.primaryActionText}>
-                            {isBusy ? 'Saving...' : 'Done (+XP)'}
-                          </Text>
-                        </Pressable>
-                      </View>
-                    ) : task.activeRun ? (
-                      <Text style={styles.statusNote}>
-                        {inProgressByMe
-                          ? 'In progress above — finish when ready!'
-                          : `In progress by ${task.activeRun.profileName}`}
-                      </Text>
-                    ) : (
-                      <Text style={styles.cooldownNote}>
-                        Completed recently — back after cooldown
-                      </Text>
-                    )}
-                  </View>
-                );
-              })
+                  );
+                })}
+              </View>
             )}
           </View>
         </View>
