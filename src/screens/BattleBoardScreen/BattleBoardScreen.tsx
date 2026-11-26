@@ -89,6 +89,8 @@ export function BattleBoardScreen() {
   const handleComplete = async (taskId: string, xp: number) => {
     setBusyTaskId(taskId);
     setBanner(null);
+    const prevRank = getRankInfo(activeProfile.xpTotal);
+    const nextRank = getRankInfo(activeProfile.xpTotal + xp);
     try {
       const comment = commentByTask[taskId]?.trim() || undefined;
       await completeTask(taskId, comment);
@@ -97,7 +99,15 @@ export function BattleBoardScreen() {
         delete next[taskId];
         return next;
       });
-      setBanner(`Mission complete! +${xp} XP earned for ${activeProfile.name}.`);
+      if (nextRank.artTier > prevRank.artTier) {
+        setBanner(
+          `EVOLUTION! ${activeProfile.name} reached Tier ${nextRank.artTier} — ${nextRank.title}! (+${xp} XP)`
+        );
+      } else if (nextRank.id !== prevRank.id || nextRank.prestigeLevel > prevRank.prestigeLevel) {
+        setBanner(`RANK UP! ${activeProfile.name} promoted to ${nextRank.title}! (+${xp} XP)`);
+      } else {
+        setBanner(`Mission complete! +${xp} XP earned for ${activeProfile.name}.`);
+      }
     } catch (err) {
       setBanner(err instanceof Error ? err.message : 'Could not complete mission.');
     } finally {
@@ -134,8 +144,11 @@ export function BattleBoardScreen() {
             <CharacterAvatar
               name={activeProfile.name}
               avatarKey={activeProfile.avatarKey}
+              avatarUrl={activeProfile.avatarUrl}
+              xpTotal={activeProfile.xpTotal}
               size="md"
               highlighted={activeProfile.role === 'coch'}
+              showTierBadge
             />
             <View style={styles.headerMeta}>
               <Text style={styles.fortLabel}>{fortState.fort.name}</Text>

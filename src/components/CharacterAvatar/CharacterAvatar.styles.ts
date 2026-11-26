@@ -3,12 +3,18 @@ import { StyleSheet } from 'react-native';
 import { Colors, Radius } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   circle: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.full,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    overflow: 'hidden',
   },
   sm: {
     width: 36,
@@ -19,12 +25,12 @@ export const styles = StyleSheet.create({
     height: 52,
   },
   lg: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
   },
-  highlighted: {
-    borderColor: Colors.brandOrange,
-    borderWidth: 3,
+  portrait: {
+    width: '100%',
+    height: '100%',
   },
   initials: {
     color: Colors.textPrimary,
@@ -36,5 +42,20 @@ export const styles = StyleSheet.create({
   },
   initialsLg: {
     fontSize: 26,
+  },
+  tierBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    borderRadius: Radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderWidth: 1.5,
+    borderColor: Colors.background,
+  },
+  tierBadgeText: {
+    color: Colors.textPrimary,
+    fontSize: 10,
+    fontWeight: '800',
   },
 });

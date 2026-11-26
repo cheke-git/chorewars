@@ -102,75 +102,20 @@ export interface FortStateDTO {
   rewards: RewardDTO[];
 }
 
-export interface AvatarPreset {
-  key: string;
-  label: string;
-  badge: string;
-  bgColor: string;
-}
-
-export const AVATAR_PRESETS: AvatarPreset[] = [
-  { key: 'commander-orange', label: 'Commander', badge: 'CM', bgColor: '#FF5A00' },
-  { key: 'broom-knight', label: 'Broom Knight', badge: 'BK', bgColor: '#2563EB' },
-  { key: 'dish-ninja', label: 'Dish Ninja', badge: 'DN', bgColor: '#7C3AED' },
-  { key: 'sparkle-wizard', label: 'Sparkle Mage', badge: 'SM', bgColor: '#0D9488' },
-  { key: 'trash-titan', label: 'Trash Titan', badge: 'TT', bgColor: '#D97706' },
-  { key: 'star-scout', label: 'Star Scout', badge: 'SS', bgColor: '#DB2777' },
-];
-
-export function getAvatarPreset(key: string): AvatarPreset {
-  return AVATAR_PRESETS.find((preset) => preset.key === key) ?? AVATAR_PRESETS[0];
-}
-
-export interface RankInfo {
-  title: string;
-  minXp: number;
-  nextTitle: string | null;
-  nextXp: number | null;
-  progress: number;
-}
-
-const RANK_TIERS = [
-  { title: 'Recruit', minXp: 0 },
-  { title: 'Scout', minXp: 30 },
-  { title: 'Corporal', minXp: 80 },
-  { title: 'Captain', minXp: 160 },
-  { title: 'Commander', minXp: 300 },
-  { title: 'Fort Legend', minXp: 500 },
-] as const;
-
-export function getRankInfo(xp: number): RankInfo {
-  let currentIndex = 0;
-  for (let i = 0; i < RANK_TIERS.length; i += 1) {
-    if (xp >= RANK_TIERS[i].minXp) {
-      currentIndex = i;
-    }
-  }
-
-  const current = RANK_TIERS[currentIndex];
-  const next = RANK_TIERS[currentIndex + 1] ?? null;
-
-  if (!next) {
-    return {
-      title: current.title,
-      minXp: current.minXp,
-      nextTitle: null,
-      nextXp: null,
-      progress: 1,
-    };
-  }
-
-  const span = next.minXp - current.minXp;
-  const progress = Math.max(0, Math.min(1, (xp - current.minXp) / span));
-
-  return {
-    title: current.title,
-    minXp: current.minXp,
-    nextTitle: next.title,
-    nextXp: next.minXp,
-    progress,
-  };
-}
+export {
+  AVATAR_PRESETS,
+  getAvatarPreset,
+  normalizeAvatarKey,
+  resolveCharacterPortrait,
+  type CharacterArchetypeKey,
+  type CharacterPreset,
+} from '@/constants/characterArt';
+export {
+  RANK_LADDER,
+  getRankInfo,
+  type RankDefinition,
+  type RankInfo,
+} from '@/constants/ranks';
 
 export function formatRecurrence(
   recurrenceType: RecurrenceType,

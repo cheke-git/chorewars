@@ -58,6 +58,8 @@ export function ScoreboardScreen() {
                   <CharacterAvatar
                     name={profile.name}
                     avatarKey={profile.avatarKey}
+                    avatarUrl={profile.avatarUrl}
+                    xpTotal={profile.xpTotal}
                     size="sm"
                     highlighted={index === 0}
                   />

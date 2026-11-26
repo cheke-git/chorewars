@@ -52,6 +52,7 @@ export function FortCommandScreen() {
 
   // Add Profile form
   const [profileName, setProfileName] = useState('');
+  const [profileAvatarKey, setProfileAvatarKey] = useState(AVATAR_PRESETS[2].key);
   const [profileIsAdult, setProfileIsAdult] = useState(false);
   const [profileRole, setProfileRole] = useState<ProfileRole>('recruit');
 
@@ -322,6 +323,26 @@ export function FortCommandScreen() {
               placeholderTextColor={Colors.textMuted}
               style={styles.input}
             />
+            <Text style={styles.label}>Character Archetype</Text>
+            <View style={styles.chipRow}>
+              {AVATAR_PRESETS.map((preset) => (
+                <Pressable
+                  key={preset.key}
+                  onPress={() => {
+                    setProfileAvatarKey(preset.key);
+                    setProfileIsAdult(preset.defaultIsAdult);
+                  }}
+                  style={[styles.chip, profileAvatarKey === preset.key && styles.chipActive]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      profileAvatarKey === preset.key && styles.chipTextActive,
+                    ]}>
+                    {preset.shortLabel}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <View style={styles.toggleRow}>
               <Text style={styles.label}>Adult Profile?</Text>
               <Switch
@@ -344,13 +365,11 @@ export function FortCommandScreen() {
               disabled={saving || !profileName.trim()}
               onPress={() =>
                 runAction(async () => {
-                  const avatarKey =
-                    AVATAR_PRESETS[fortState.profiles.length % AVATAR_PRESETS.length].key;
                   await createProfile({
                     name: profileName.trim(),
                     role: profileRole,
                     isAdult: profileIsAdult,
-                    avatarKey,
+                    avatarKey: profileAvatarKey,
                   });
                   setProfileName('');
                 }, 'Character added to the Fort!')

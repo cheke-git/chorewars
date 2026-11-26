@@ -54,8 +54,11 @@ export function ProfilePickerScreen() {
                   <CharacterAvatar
                     name={profile.name}
                     avatarKey={profile.avatarKey}
+                    avatarUrl={profile.avatarUrl}
+                    xpTotal={profile.xpTotal}
                     size="lg"
                     highlighted={profile.role === 'coch'}
+                    showTierBadge
                   />
                   <Text style={styles.profileName}>{profile.name}</Text>
                   <Text style={styles.profileRank}>{rank.title}</Text>

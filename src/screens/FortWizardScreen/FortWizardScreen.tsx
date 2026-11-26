@@ -43,12 +43,13 @@ export function FortWizardScreen() {
 
   // Step 2: Squad & CoCh PIN
   const [cochName, setCochName] = useState('Commander');
+  const [cochAvatar, setCochAvatar] = useState(AVATAR_PRESETS[0].key);
   const [cochPin, setCochPin] = useState('');
   const [members, setMembers] = useState<DraftMember[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberIsAdult, setNewMemberIsAdult] = useState(false);
   const [newMemberRole, setNewMemberRole] = useState<ProfileRole>('recruit');
-  const [newMemberAvatar, setNewMemberAvatar] = useState(AVATAR_PRESETS[1].key);
+  const [newMemberAvatar, setNewMemberAvatar] = useState(AVATAR_PRESETS[2].key);
 
   // Step 3: Starter Goal Reward
   const [includeReward, setIncludeReward] = useState(true);
@@ -146,7 +147,7 @@ export function FortWizardScreen() {
             name: cochName.trim(),
             role: 'coch',
             isAdult: true,
-            avatarKey: AVATAR_PRESETS[0].key,
+            avatarKey: cochAvatar,
           },
           ...members.map((m) => ({
             name: m.name,
@@ -308,6 +309,26 @@ export function FortWizardScreen() {
               </View>
 
               <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Commander Character</Text>
+                <View style={styles.chipRow}>
+                  {AVATAR_PRESETS.filter((p) => p.defaultIsAdult).map((preset) => (
+                    <Pressable
+                      key={preset.key}
+                      onPress={() => setCochAvatar(preset.key)}
+                      style={[styles.chip, cochAvatar === preset.key && styles.chipActive]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          cochAvatar === preset.key && styles.chipTextActive,
+                        ]}>
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.fieldGroup}>
                 <Text style={styles.label}>4-Digit CoCh PIN (protects Fort settings)</Text>
                 <TextInput
                   value={cochPin}
@@ -352,15 +373,24 @@ export function FortWizardScreen() {
               </View>
 
               <View style={styles.chipRow}>
-                {AVATAR_PRESETS.slice(1).map((preset) => (
+                {AVATAR_PRESETS.map((preset) => (
                   <Pressable
                     key={preset.key}
-                    onPress={() => setNewMemberAvatar(preset.key)}
+                    onPress={() => {
+                      setNewMemberAvatar(preset.key);
+                      setNewMemberIsAdult(preset.defaultIsAdult);
+                    }}
                     style={[
-                      styles.avatarChoice,
-                      newMemberAvatar === preset.key && styles.avatarChoiceActive,
+                      styles.chip,
+                      newMemberAvatar === preset.key && styles.chipActive,
                     ]}>
-                    <CharacterAvatar name={preset.badge} avatarKey={preset.key} size="sm" />
+                    <Text
+                      style={[
+                        styles.chipText,
+                        newMemberAvatar === preset.key && styles.chipTextActive,
+                      ]}>
+                      {preset.shortLabel}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
