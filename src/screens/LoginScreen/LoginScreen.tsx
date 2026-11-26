@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -12,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandLogo } from '@/components/BrandLogo/BrandLogo';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
+import { useApp } from '@/context/AppContext';
 import { buildApiUrl } from '@/lib/api';
 
 import { styles } from './LoginScreen.styles';
@@ -23,21 +25,39 @@ type ApiStatus =
   | { state: 'error'; message: string };
 
 export function LoginScreen() {
+  const { login, register, lockedProfileId } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<'login' | 'register' | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<ApiStatus>({ state: 'idle' });
 
-  const handleAuthAction = (action: 'login' | 'register') => {
+  const handleAuthAction = async (action: 'login' | 'register') => {
     if (!email.trim() || !password.trim()) {
-      setFeedback('Enter an email and password to continue.');
+      setError('Enter an email and password to continue.');
       return;
     }
-    setFeedback(
-      action === 'login'
-        ? 'Login endpoint coming in Phase 1.'
-        : 'Registration endpoint coming in Phase 1.'
-    );
+
+    setSubmitting(action);
+    setError(null);
+    try {
+      const result =
+        action === 'login'
+          ? await login(email.trim(), password)
+          : await register(email.trim(), password);
+
+      if (!result.hasFort) {
+        router.replace('/wizard');
+      } else if (lockedProfileId) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/profiles');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed.');
+    } finally {
+      setSubmitting(null);
+    }
   };
 
   const checkApiHealth = async () => {
@@ -52,8 +72,8 @@ export function LoginScreen() {
         state: 'ok',
         message: `API ${data.status ?? 'ok'} (${data.timestamp ?? 'reachable'})`,
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to reach /api/health';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to reach /api/health';
       setApiStatus({ state: 'error', message });
     }
   };
@@ -66,17 +86,17 @@ export function LoginScreen() {
         <View style={styles.card}>
           <View style={styles.header}>
             <BrandLogo />
-            <Text style={styles.tagline}>Claim chores. Earn points. Win the house.</Text>
+            <Text style={styles.tagline}>Claim chores. Earn XP. Win the Fort.</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Commander Email</Text>
               <TextInput
                 value={email}
                 onChangeText={(value) => {
                   setEmail(value);
-                  setFeedback(null);
+                  setError(null);
                 }}
                 placeholder="you@example.com"
                 placeholderTextColor={Colors.textMuted}
@@ -94,9 +114,9 @@ export function LoginScreen() {
                 value={password}
                 onChangeText={(value) => {
                   setPassword(value);
-                  setFeedback(null);
+                  setError(null);
                 }}
-                placeholder="Enter password"
+                placeholder="At least 6 characters"
                 placeholderTextColor={Colors.textMuted}
                 secureTextEntry
                 autoComplete="password"
@@ -105,17 +125,19 @@ export function LoginScreen() {
               />
             </View>
 
-            {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.actionsRow}>
               <PrimaryButton
-                label="Register"
+                label={submitting === 'register' ? 'Creating...' : 'Register'}
                 variant="secondary"
+                disabled={submitting !== null}
                 onPress={() => handleAuthAction('register')}
               />
               <PrimaryButton
-                label="Login"
+                label={submitting === 'login' ? 'Signing in...' : 'Login'}
                 variant="primary"
+                disabled={submitting !== null}
                 onPress={() => handleAuthAction('login')}
               />
             </View>

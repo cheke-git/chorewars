@@ -58,6 +58,11 @@ export const styles = StyleSheet.create({
     fontSize: Typography.label,
     textAlign: 'center',
   },
+  errorText: {
+    color: Colors.error,
+    fontSize: Typography.label,
+    textAlign: 'center',
+  },
   actionsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
