@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
+import { FortSwitcher } from '@/components/FortSwitcher/FortSwitcher';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getRankInfo } from '@/shared/types';
@@ -40,6 +41,7 @@ export function ScoreboardScreen() {
             />
           }>
           <View style={styles.container}>
+            <FortSwitcher />
             <View style={styles.header}>
               <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
               <Text style={styles.title}>Fort Scoreboard</Text>

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
+import { FortSwitcher } from '@/components/FortSwitcher/FortSwitcher';
 import { TaskArtBadge } from '@/components/TaskArtBadge/TaskArtBadge';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
@@ -142,7 +143,11 @@ export function BattleBoardScreen() {
           />
         }>
         <View style={styles.container}>
-          <View style={styles.headerCard}>
+          <FortSwitcher />
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile')}
+            style={styles.headerCard}
+            accessibilityRole="button">
             <CharacterAvatar
               name={activeUser.name}
               avatarKey={activeUser.avatarKey}
@@ -175,12 +180,8 @@ export function BattleBoardScreen() {
               <View style={styles.lockedBadge}>
                 <Text style={styles.lockedBadgeText}>Locked</Text>
               </View>
-            ) : (
-              <Pressable onPress={() => router.push('/profiles')} style={styles.switchBtn}>
-                <Text style={styles.switchBtnText}>Switch</Text>
-              </Pressable>
-            )}
-          </View>
+            ) : null}
+          </Pressable>
 
           {banner ? (
             <View style={styles.banner}>

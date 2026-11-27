@@ -23,8 +23,8 @@ function AuthGuard() {
     }
 
     if (session.forts.length === 0) {
-      if (topSegment !== 'wizard') {
-        router.replace('/wizard');
+      if (topSegment !== 'welcome' && topSegment !== 'wizard') {
+        router.replace('/welcome');
       }
       return;
     }
@@ -33,7 +33,7 @@ function AuthGuard() {
       return;
     }
 
-    if (topSegment === undefined || topSegment === 'login') {
+    if (topSegment === undefined || topSegment === 'login' || topSegment === 'welcome') {
       if (lockedUserId || session.supervisedUsers.length === 0) {
         router.replace('/(tabs)');
       } else {

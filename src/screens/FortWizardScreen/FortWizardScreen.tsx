@@ -11,12 +11,13 @@ import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { generateStarterPlan } from '@/shared/templates';
-import { AVATAR_PRESETS, type HomeType, type ProfileRole } from '@/shared/types';
+import { AVATAR_PRESETS, normalizeAvatarKey, type HomeType } from '@/shared/types';
 
 import { styles } from './FortWizardScreen.styles';
 
 interface DraftMember {
   id: string;
+  existingUserId?: string;
   name: string;
   role: 'reviewer' | 'recruit';
   isAdult: boolean;
@@ -30,8 +31,12 @@ const HOME_TYPES: { key: HomeType; label: string }[] = [
 ];
 
 export function FortWizardScreen() {
-  const { setupFort, logout } = useApp();
+  const { session, setupFort, logout } = useApp();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  const hasExistingPin = Boolean(session?.user.hasGuardianPin);
+  const hasExistingForts = (session?.forts.length ?? 0) > 0;
+  const existingSupervised = session?.supervisedUsers ?? [];
 
   // Step 1: Home details
   const [fortName, setFortName] = useState('');
@@ -43,9 +48,14 @@ export function FortWizardScreen() {
   const [hasPets, setHasPets] = useState(false);
 
   // Step 2: Squad & CoCh PIN
-  const [cochName, setCochName] = useState('Commander');
-  const [cochAvatar, setCochAvatar] = useState(AVATAR_PRESETS[0].key);
+  const [cochName, setCochName] = useState(session?.user.name ?? 'Commander');
+  const [cochAvatar, setCochAvatar] = useState(
+    normalizeAvatarKey(session?.user.avatarKey ?? AVATAR_PRESETS[0].key)
+  );
   const [cochPin, setCochPin] = useState('');
+  const [selectedExistingIds, setSelectedExistingIds] = useState<string[]>(
+    existingSupervised.map((u) => u.id)
+  );
   const [members, setMembers] = useState<DraftMember[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberIsAdult, setNewMemberIsAdult] = useState(false);
@@ -116,8 +126,12 @@ export function FortWizardScreen() {
         setError('Enter a name for the Commander in Chief.');
         return;
       }
-      if (!/^\d{4}$/.test(cochPin)) {
-        setError('Choose a 4-digit CoCh PIN (numbers only).');
+      if (!hasExistingPin && !/^\d{4}$/.test(cochPin)) {
+        setError('Choose a 4-digit Guardian PIN (numbers only).');
+        return;
+      }
+      if (cochPin.length > 0 && !/^\d{4}$/.test(cochPin)) {
+        setError('Guardian PIN must be exactly 4 digits.');
         return;
       }
       setStep(3);
@@ -134,6 +148,16 @@ export function FortWizardScreen() {
 
     setSubmitting(true);
     try {
+      const existingChosen = existingSupervised
+        .filter((u) => selectedExistingIds.includes(u.id))
+        .map((u) => ({
+          existingUserId: u.id,
+          name: u.name,
+          role: 'recruit' as const,
+          isAdult: u.isAdult,
+          avatarKey: u.avatarKey,
+        }));
+
       await setupFort({
         name: fortName.trim(),
         homeType,
@@ -144,13 +168,16 @@ export function FortWizardScreen() {
         hasPets,
         cochName: cochName.trim(),
         cochAvatarKey: cochAvatar,
-        cochPin,
-        supervisedMembers: members.map((m) => ({
-          name: m.name,
-          role: m.role,
-          isAdult: m.isAdult,
-          avatarKey: m.avatarKey,
-        })),
+        cochPin: cochPin.length === 4 ? cochPin : undefined,
+        supervisedMembers: [
+          ...existingChosen,
+          ...members.map((m) => ({
+            name: m.name,
+            role: m.role,
+            isAdult: m.isAdult,
+            avatarKey: m.avatarKey,
+          })),
+        ],
         starterReward: includeReward
           ? {
               title: rewardTitle.trim() || undefined,
@@ -160,7 +187,8 @@ export function FortWizardScreen() {
           : undefined,
       });
 
-      router.replace(members.length > 0 ? '/profiles' : '/(tabs)');
+      const hasKids = existingChosen.length + members.length > 0;
+      router.replace(!hasExistingForts && hasKids ? '/profiles' : '/(tabs)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set up Fort.');
     } finally {
@@ -177,11 +205,26 @@ export function FortWizardScreen() {
             <BrandLogo />
             <Pressable
               onPress={() => {
-                void logout();
+                if (hasExistingForts) {
+                  router.replace('/(tabs)/profile');
+                } else {
+                  router.replace('/welcome');
+                }
               }}
               style={styles.signOutBtn}>
-              <Text style={styles.signOutText}>Sign out</Text>
+              <Text style={styles.signOutText}>
+                {hasExistingForts ? '← Back to Profile' : '← Back to Welcome'}
+              </Text>
             </Pressable>
+            {!hasExistingForts ? (
+              <Pressable
+                onPress={() => {
+                  void logout();
+                }}
+                style={styles.signOutBtn}>
+                <Text style={styles.signOutText}>Sign out</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           <View style={styles.stepBar}>
@@ -308,11 +351,15 @@ export function FortWizardScreen() {
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>4-Digit CoCh PIN (protects Fort settings)</Text>
+                <Text style={styles.label}>
+                  {hasExistingPin
+                    ? '4-Digit Guardian PIN (optional — already set)'
+                    : '4-Digit Guardian PIN (protects Fort settings)'}
+                </Text>
                 <TextInput
                   value={cochPin}
                   onChangeText={(value) => setCochPin(value.replace(/[^0-9]/g, '').slice(0, 4))}
-                  placeholder="1234"
+                  placeholder={hasExistingPin ? 'Keep existing PIN' : '1234'}
                   placeholderTextColor={Colors.textMuted}
                   keyboardType="number-pad"
                   secureTextEntry
@@ -320,6 +367,32 @@ export function FortWizardScreen() {
                   style={styles.input}
                 />
               </View>
+
+              {existingSupervised.length > 0 ? (
+                <>
+                  <View style={styles.divider} />
+                  <Text style={styles.sectionHeading}>Include Your Supervised Kids</Text>
+                  <View style={styles.chipRow}>
+                    {existingSupervised.map((kid) => {
+                      const picked = selectedExistingIds.includes(kid.id);
+                      return (
+                        <Pressable
+                          key={kid.id}
+                          onPress={() =>
+                            setSelectedExistingIds((prev) =>
+                              picked ? prev.filter((id) => id !== kid.id) : [...prev, kid.id]
+                            )
+                          }
+                          style={[styles.chip, picked && styles.chipActive]}>
+                          <Text style={[styles.chipText, picked && styles.chipTextActive]}>
+                            {picked ? `✓ ${kid.name}` : kid.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              ) : null}
 
               <View style={styles.divider} />
               <Text style={styles.sectionHeading}>Add Players (Netflix-Style Profiles)</Text>

@@ -182,6 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
   const [lockedUserId, setLockedUserId] = useState<string | null>(null);
   const [cochUnlocked, setCochUnlocked] = useState(false);
+  const [verifiedPin, setVerifiedPin] = useState<string | null>(null);
 
   const loadFortById = useCallback(async (authToken: string, fortId: string) => {
     const state = await apiRequest<FortStateDTO>(`/api/forts/${fortId}`, { token: authToken });
@@ -333,6 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveUserId(null);
     setLockedUserId(null);
     setCochUnlocked(false);
+    setVerifiedPin(null);
   }, []);
 
   const refreshSession = useCallback(async () => {
@@ -365,6 +367,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (userId: string, lockDevice = false) => {
       setActiveUserId(userId);
       setCochUnlocked(false);
+      setVerifiedPin(null);
       await setStoredValue(STORAGE_KEYS.ACTIVE_USER_ID, userId);
       if (lockDevice) {
         setLockedUserId(userId);
@@ -394,6 +397,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         body: { pin },
         token,
       });
+      setVerifiedPin(pin);
       setCochUnlocked(true);
     },
     [token]
@@ -401,6 +405,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const lockCoch = useCallback(() => {
     setCochUnlocked(false);
+    setVerifiedPin(null);
   }, []);
 
   const updateMe = useCallback(
@@ -413,15 +418,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!token) throw new Error('Not authenticated.');
       const nextSession = await apiRequest<SessionPayloadDTO>('/api/users/me', {
         method: 'PATCH',
-        body: payload,
+        body: {
+          ...payload,
+          ...(payload.guardianPin && verifiedPin ? { currentPin: verifiedPin } : {}),
+        },
         token,
       });
+      if (payload.guardianPin) {
+        setVerifiedPin(payload.guardianPin);
+      }
       setSession(nextSession);
       if (activeFortId) {
         await loadFortById(token, activeFortId);
       }
     },
-    [activeFortId, loadFortById, token]
+    [activeFortId, loadFortById, token, verifiedPin]
   );
 
   const createSupervisedUser = useCallback(

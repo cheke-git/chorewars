@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +8,7 @@ import { PinModal } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { AVATAR_PRESETS, type ProfileRole, type RecurrenceType } from '@/shared/types';
+import { AVATAR_PRESETS, type RecurrenceType } from '@/shared/types';
 
 import { styles } from './FortCommandScreen.styles';
 
@@ -23,14 +22,13 @@ const RECURRENCE_OPTIONS: { key: RecurrenceType; label: string }[] = [
 
 export function FortCommandScreen() {
   const {
+    session,
     fortState,
-    lockedUserId,
     cochUnlocked,
     isCochOfCurrentFort,
     verifyGuardianPin,
     lockCoch,
-    unlockDevice,
-    logout,
+    updateMe,
     createArea,
     createTask,
     createSupervisedUser,
@@ -63,6 +61,9 @@ export function FortCommandScreen() {
   const [rewardTitle, setRewardTitle] = useState('');
   const [rewardTargetXp, setRewardTargetXp] = useState('50');
   const [excludedIds, setExcludedIds] = useState<string[]>([]);
+
+  // Update Guardian PIN form
+  const [newPin, setNewPin] = useState('');
 
   if (!fortState) {
     return null;
@@ -383,29 +384,32 @@ export function FortCommandScreen() {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Device & Account</Text>
-            {lockedUserId ? (
-              <PrimaryButton
-                label="Unlock Device Profile Binding"
-                variant="secondary"
-                onPress={() =>
-                  runAction(async () => {
-                    await unlockDevice();
-                  }, 'Device unlocked—profile picker will show again.')
-                }
-              />
-            ) : null}
-            <PrimaryButton
-              label="Switch Active Character"
-              variant="secondary"
-              onPress={() => router.push('/profiles')}
+            <Text style={styles.cardTitle}>Guardian PIN Security</Text>
+            <Text style={styles.label}>
+              {session?.user.hasGuardianPin
+                ? 'Change 4-Digit Guardian PIN'
+                : 'Set 4-Digit Guardian PIN'}
+            </Text>
+            <TextInput
+              value={newPin}
+              onChangeText={(v) => setNewPin(v.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="New 4-digit PIN"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={4}
+              style={styles.input}
             />
             <PrimaryButton
-              label="Sign Out of Fort Account"
+              label={saving ? 'Updating...' : 'Update Guardian PIN'}
               variant="secondary"
-              onPress={() => {
-                void logout();
-              }}
+              disabled={saving || newPin.length !== 4}
+              onPress={() =>
+                runAction(async () => {
+                  await updateMe({ guardianPin: newPin });
+                  setNewPin('');
+                }, 'Guardian PIN updated!')
+              }
             />
           </View>
         </View>
