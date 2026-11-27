@@ -18,7 +18,7 @@ import { styles } from './FortWizardScreen.styles';
 interface DraftMember {
   id: string;
   name: string;
-  role: ProfileRole;
+  role: 'reviewer' | 'recruit';
   isAdult: boolean;
   avatarKey: string;
 }
@@ -49,7 +49,7 @@ export function FortWizardScreen() {
   const [members, setMembers] = useState<DraftMember[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberIsAdult, setNewMemberIsAdult] = useState(false);
-  const [newMemberRole, setNewMemberRole] = useState<ProfileRole>('recruit');
+  const [newMemberRole, setNewMemberRole] = useState<'reviewer' | 'recruit'>('recruit');
   const [newMemberAvatar, setNewMemberAvatar] = useState(AVATAR_PRESETS[2].key);
 
   // Step 3: Starter Goal Reward
@@ -142,21 +142,15 @@ export function FortWizardScreen() {
         hasKitchen,
         hasYard,
         hasPets,
+        cochName: cochName.trim(),
+        cochAvatarKey: cochAvatar,
         cochPin,
-        members: [
-          {
-            name: cochName.trim(),
-            role: 'coch',
-            isAdult: true,
-            avatarKey: cochAvatar,
-          },
-          ...members.map((m) => ({
-            name: m.name,
-            role: m.role,
-            isAdult: m.isAdult,
-            avatarKey: m.avatarKey,
-          })),
-        ],
+        supervisedMembers: members.map((m) => ({
+          name: m.name,
+          role: m.role,
+          isAdult: m.isAdult,
+          avatarKey: m.avatarKey,
+        })),
         starterReward: includeReward
           ? {
               title: rewardTitle.trim() || undefined,
@@ -166,7 +160,7 @@ export function FortWizardScreen() {
           : undefined,
       });
 
-      router.replace('/profiles');
+      router.replace(members.length > 0 ? '/profiles' : '/(tabs)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set up Fort.');
     } finally {
@@ -182,9 +176,8 @@ export function FortWizardScreen() {
           <View style={styles.topRow}>
             <BrandLogo />
             <Pressable
-              onPress={async () => {
-                await logout();
-                router.replace('/');
+              onPress={() => {
+                void logout();
               }}
               style={styles.signOutBtn}>
               <Text style={styles.signOutText}>Sign out</Text>

@@ -42,7 +42,8 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Chore Wars Conventions
 
-- **Styling**: Use plain React Native `StyleSheet` placed in a dedicated `.styles.ts` file next to each component or screen (e.g., `LoginScreen.tsx` + `LoginScreen.styles.ts`).
+- **Styling**: Use plain React Native `StyleSheet` placed in a dedicated `.styles.ts` file next to each component or screen (e.g., `LoginScreen.tsx` + `LoginScreen.styles.ts`). Prefer a single cross-platform React Native `StyleSheet` implementation over platform-split `.web.tsx` + raw CSS workarounds unless a platform gap makes splitting genuinely unavoidable.
 - **Route separation**: Keep `src/app/` strictly for Expo Router route files (`_layout.tsx`, screen entrypoints, and `api/*+api.ts` routes). Place screen implementations and their `.styles.ts` files under `src/screens/` and reusable UI under `src/components/`.
 - **Branding**: Preserve `assets/images/cw-logo-splash.png` and use theme tokens from `src/constants/theme.ts` (`#000033` deep navy background + `#FF5A00` brand orange).
 - **Backend API**: Write backend endpoints as Expo Router API routes in `src/app/api/*+api.ts`. Production Vercel deployment uses `vercel.json` + `api/index.js`.
+- **Decision Log**: Record product/technical override decisions—with rationale, risks, and mitigations—in `docs/DECISIONS.md`.

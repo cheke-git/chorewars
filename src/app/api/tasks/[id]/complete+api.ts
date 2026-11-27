@@ -1,31 +1,24 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { getDb, profiles, taskRuns, tasks } from '@/db';
-import { HttpError, handleApiError, requireAuth } from '@/server/auth';
-import { buildFortState, requireFortByAccountId } from '@/server/fortState';
+import { fortMemberships, getDb, taskRuns, tasks, users } from '@/db';
+import { HttpError, extractRouteParam, handleApiError, requireAuth } from '@/server/auth';
+import {
+  assertActingUserAuthorized,
+  buildFortState,
+  buildSessionPayload,
+  requireFortMembership,
+} from '@/server/fortState';
 
 const completeSchema = z.object({
-  profileId: z.string().uuid('Invalid profile ID.'),
+  userId: z.string().uuid('Invalid user ID.'),
   comment: z.string().trim().max(240).optional(),
 });
 
-function extractTaskId(request: Request, params?: Record<string, string>): string {
-  if (params?.id) {
-    return params.id;
-  }
-  const match = new URL(request.url).pathname.match(/\/api\/tasks\/([^/]+)\/complete/);
-  if (!match) {
-    throw new HttpError('Missing task ID.', 400);
-  }
-  return match[1];
-}
-
 export async function POST(request: Request, params?: Record<string, string>) {
   try {
-    const session = await requireAuth(request);
-    const fort = await requireFortByAccountId(session.accountId);
-    const taskId = extractTaskId(request, params);
+    const auth = await requireAuth(request);
+    const taskId = extractRouteParam(request, params, 'id', /\/api\/tasks\/([^/]+)\/complete/);
 
     const body = await request.json();
     const parsed = completeSchema.safeParse(body);
@@ -33,38 +26,27 @@ export async function POST(request: Request, params?: Record<string, string>) {
       throw new HttpError(parsed.error.issues[0]?.message ?? 'Invalid completion request.', 400);
     }
 
+    await assertActingUserAuthorized(auth.userId, parsed.data.userId);
+
     const db = getDb();
-
-    const [[task], [profile], [activeRun]] = await Promise.all([
-      db
-        .select()
-        .from(tasks)
-        .where(and(eq(tasks.id, taskId), eq(tasks.fortId, fort.id)))
-        .limit(1),
-      db
-        .select()
-        .from(profiles)
-        .where(and(eq(profiles.id, parsed.data.profileId), eq(profiles.fortId, fort.id)))
-        .limit(1),
-      db
-        .select()
-        .from(taskRuns)
-        .where(
-          and(
-            eq(taskRuns.taskId, taskId),
-            eq(taskRuns.fortId, fort.id),
-            eq(taskRuns.status, 'in_progress')
-          )
-        )
-        .limit(1),
-    ]);
-
-    if (!task) {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!task || !task.isActive) {
       throw new HttpError('Task not found.', 404);
     }
-    if (!profile) {
-      throw new HttpError('Profile not found in this Fort.', 404);
-    }
+
+    const membership = await requireFortMembership(task.fortId, parsed.data.userId);
+
+    const [activeRun] = await db
+      .select()
+      .from(taskRuns)
+      .where(
+        and(
+          eq(taskRuns.taskId, taskId),
+          eq(taskRuns.fortId, task.fortId),
+          eq(taskRuns.status, 'in_progress')
+        )
+      )
+      .limit(1);
 
     const now = new Date();
     const comment = parsed.data.comment?.trim() || null;
@@ -77,7 +59,7 @@ export async function POST(request: Request, params?: Record<string, string>) {
       await db
         .update(taskRuns)
         .set({
-          profileId: profile.id,
+          userId: parsed.data.userId,
           status: 'approved',
           completedAt: now,
           durationSeconds,
@@ -88,8 +70,8 @@ export async function POST(request: Request, params?: Record<string, string>) {
     } else {
       await db.insert(taskRuns).values({
         taskId: task.id,
-        fortId: fort.id,
-        profileId: profile.id,
+        fortId: task.fortId,
+        userId: parsed.data.userId,
         status: 'approved',
         startedAt: now,
         completedAt: now,
@@ -99,15 +81,24 @@ export async function POST(request: Request, params?: Record<string, string>) {
       });
     }
 
-    await db
-      .update(profiles)
-      .set({
-        xpTotal: sql`${profiles.xpTotal} + ${task.xp}`,
-      })
-      .where(eq(profiles.id, profile.id));
+    // Increment BOTH global Career XP and per-Fort XP
+    await Promise.all([
+      db
+        .update(users)
+        .set({ careerXp: sql`${users.careerXp} + ${task.xp}` })
+        .where(eq(users.id, parsed.data.userId)),
+      db
+        .update(fortMemberships)
+        .set({ fortXp: sql`${fortMemberships.fortXp} + ${task.xp}` })
+        .where(eq(fortMemberships.id, membership.id)),
+    ]);
 
-    const state = await buildFortState(fort.id);
-    return Response.json(state);
+    const [fortState, session] = await Promise.all([
+      buildFortState(task.fortId),
+      buildSessionPayload(auth.userId),
+    ]);
+
+    return Response.json({ fortState, session });
   } catch (error) {
     return handleApiError(error);
   }

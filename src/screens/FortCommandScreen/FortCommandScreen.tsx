@@ -17,21 +17,23 @@ const RECURRENCE_OPTIONS: { key: RecurrenceType; label: string }[] = [
   { key: 'daily', label: 'Daily' },
   { key: 'cooldown', label: 'Every 3d' },
   { key: 'weekly', label: 'Weekly' },
+  { key: 'on_demand', label: 'Anytime' },
   { key: 'one_off', label: 'One-Off' },
 ];
 
 export function FortCommandScreen() {
   const {
     fortState,
-    lockedProfileId,
+    lockedUserId,
     cochUnlocked,
-    verifyCochPin,
+    isCochOfCurrentFort,
+    verifyGuardianPin,
     lockCoch,
     unlockDevice,
     logout,
     createArea,
     createTask,
-    createProfile,
+    createSupervisedUser,
     createReward,
   } = useApp();
 
@@ -51,11 +53,11 @@ export function FortCommandScreen() {
   const [areaName, setAreaName] = useState('');
   const [areaXp, setAreaXp] = useState('15');
 
-  // Add Profile form
+  // Add Supervised Profile form
   const [profileName, setProfileName] = useState('');
   const [profileAvatarKey, setProfileAvatarKey] = useState(AVATAR_PRESETS[2].key);
   const [profileIsAdult, setProfileIsAdult] = useState(false);
-  const [profileRole, setProfileRole] = useState<ProfileRole>('recruit');
+  const [profileRole, setProfileRole] = useState<'reviewer' | 'recruit'>('recruit');
 
   // Add Reward form
   const [rewardTitle, setRewardTitle] = useState('');
@@ -80,6 +82,25 @@ export function FortCommandScreen() {
     }
   };
 
+  if (!isCochOfCurrentFort) {
+    return (
+      <FortBackground>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.lockedCenter}>
+            <View style={styles.lockedCard}>
+              <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
+              <Text style={styles.lockedTitle}>Commander Access Only</Text>
+              <Text style={styles.lockedDesc}>
+                Only a Commander in Chief (CoCh) of {fortState.fort.name} can edit this Fort&apos;s
+                missions, areas, and rewards.
+              </Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </FortBackground>
+    );
+  }
+
   if (!cochUnlocked) {
     return (
       <FortBackground>
@@ -89,11 +110,11 @@ export function FortCommandScreen() {
               <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
               <Text style={styles.lockedTitle}>Fort Command</Text>
               <Text style={styles.lockedDesc}>
-                Protected by your 4-digit Commander in Chief PIN so recruits can&apos;t edit missions
-                or rewards.
+                Protected by your 4-digit Guardian PIN so recruits can&apos;t edit missions or
+                rewards.
               </Text>
               <PrimaryButton
-                label="Unlock with CoCh PIN"
+                label="Unlock with Guardian PIN"
                 variant="primary"
                 onPress={() => setPinModalOpen(true)}
               />
@@ -104,7 +125,7 @@ export function FortCommandScreen() {
             visible={pinModalOpen}
             onCancel={() => setPinModalOpen(false)}
             onVerify={async (pin) => {
-              await verifyCochPin(pin);
+              await verifyGuardianPin(pin);
               setPinModalOpen(false);
             }}
           />
@@ -204,7 +225,7 @@ export function FortCommandScreen() {
                   Anyone (Open)
                 </Text>
               </Pressable>
-              {fortState.profiles.map((p) => (
+              {fortState.members.map((p) => (
                 <Pressable
                   key={p.id}
                   onPress={() => setTaskAssigneeId(p.id)}
@@ -228,7 +249,7 @@ export function FortCommandScreen() {
                     xp: Math.max(1, Number.parseInt(taskXp, 10) || 10),
                     recurrenceType: taskRecurrence,
                     cooldownDays: taskRecurrence === 'cooldown' ? 3 : null,
-                    assignedProfileId: taskAssigneeId,
+                    assignedUserId: taskAssigneeId,
                   });
                   setTaskTitle('');
                 }, 'Mission added to the Battle Board!')
@@ -254,7 +275,7 @@ export function FortCommandScreen() {
             />
             <Text style={styles.label}>Exclude from this reward (tap to exclude)</Text>
             <View style={styles.chipRow}>
-              {fortState.profiles.map((p) => {
+              {fortState.members.map((p) => {
                 const isExcluded = excludedIds.includes(p.id);
                 return (
                   <Pressable
@@ -277,7 +298,7 @@ export function FortCommandScreen() {
                   await createReward({
                     title: rewardTitle.trim() || undefined,
                     targetXp: Math.max(5, Number.parseInt(rewardTargetXp, 10) || 20),
-                    excludedProfileIds: excludedIds,
+                    excludedUserIds: excludedIds,
                   });
                   setRewardTitle('');
                   setExcludedIds([]);
@@ -316,7 +337,7 @@ export function FortCommandScreen() {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Add Character Profile</Text>
+            <Text style={styles.cardTitle}>Add Supervised Character</Text>
             <TextInput
               value={profileName}
               onChangeText={setProfileName}
@@ -348,11 +369,12 @@ export function FortCommandScreen() {
               disabled={saving || !profileName.trim()}
               onPress={() =>
                 runAction(async () => {
-                  await createProfile({
+                  await createSupervisedUser({
                     name: profileName.trim(),
                     role: profileRole,
                     isAdult: profileIsAdult,
                     avatarKey: profileAvatarKey,
+                    fortId: fortState.fort.id,
                   });
                   setProfileName('');
                 }, 'Character added to the Fort!')
@@ -362,7 +384,7 @@ export function FortCommandScreen() {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Device & Account</Text>
-            {lockedProfileId ? (
+            {lockedUserId ? (
               <PrimaryButton
                 label="Unlock Device Profile Binding"
                 variant="secondary"
@@ -381,9 +403,8 @@ export function FortCommandScreen() {
             <PrimaryButton
               label="Sign Out of Fort Account"
               variant="secondary"
-              onPress={async () => {
-                await logout();
-                router.replace('/');
+              onPress={() => {
+                void logout();
               }}
             />
           </View>

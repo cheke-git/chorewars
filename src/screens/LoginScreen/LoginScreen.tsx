@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -26,7 +25,7 @@ type ApiStatus =
   | { state: 'error'; message: string };
 
 export function LoginScreen() {
-  const { login, register, lockedProfileId } = useApp();
+  const { login, register } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState<'login' | 'register' | null>(null);
@@ -42,17 +41,10 @@ export function LoginScreen() {
     setSubmitting(action);
     setError(null);
     try {
-      const result =
-        action === 'login'
-          ? await login(email.trim(), password)
-          : await register(email.trim(), password);
-
-      if (!result.hasFort) {
-        router.replace('/wizard');
-      } else if (lockedProfileId) {
-        router.replace('/(tabs)');
+      if (action === 'login') {
+        await login(email.trim(), password);
       } else {
-        router.replace('/profiles');
+        await register(email.trim(), password);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed.');

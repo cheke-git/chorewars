@@ -15,7 +15,7 @@ import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { TaskArtBadge } from '@/components/TaskArtBadge/TaskArtBadge';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { formatRecurrence, getRankInfo, type ProfileDTO } from '@/shared/types';
+import { formatRecurrence, getRankInfo, type FortMemberDTO } from '@/shared/types';
 
 import { styles } from './BattleBoardScreen.styles';
 
@@ -26,8 +26,9 @@ const FILTER_GENERAL = '__general__';
 export function BattleBoardScreen() {
   const {
     fortState,
-    activeProfile,
-    lockedProfileId,
+    activeUser,
+    activeMember,
+    lockedUserId,
     refreshFort,
     startTask,
     completeTask,
@@ -40,27 +41,28 @@ export function BattleBoardScreen() {
   const [commentByTask, setCommentByTask] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState<string | null>(null);
 
-  const profileById = useMemo(() => {
-    const map = new Map<string, ProfileDTO>();
-    for (const p of fortState?.profiles ?? []) {
-      map.set(p.id, p);
+  const memberById = useMemo(() => {
+    const map = new Map<string, FortMemberDTO>();
+    for (const m of fortState?.members ?? []) {
+      map.set(m.id, m);
     }
     return map;
-  }, [fortState?.profiles]);
+  }, [fortState?.members]);
 
-  if (!fortState || !activeProfile) {
+  if (!fortState || !activeUser) {
     return null;
   }
 
-  const rank = getRankInfo(activeProfile.xpTotal);
+  const rank = getRankInfo(activeUser.careerXp);
+  const fortXp = activeMember?.fortXp ?? 0;
 
   const myInProgressTasks = fortState.tasks.filter(
-    (t) => t.activeRun?.profileId === activeProfile.id
+    (t) => t.activeRun?.userId === activeUser.id
   );
 
   const filteredTasks = fortState.tasks.filter((task) => {
     if (selectedFilter === FILTER_ALL) return true;
-    if (selectedFilter === FILTER_MINE) return task.assignedProfileId === activeProfile.id;
+    if (selectedFilter === FILTER_MINE) return task.assignedUserId === activeUser.id;
     if (selectedFilter === FILTER_GENERAL) return task.areaId === null;
     return task.areaId === selectedFilter;
   });
@@ -89,8 +91,8 @@ export function BattleBoardScreen() {
   const handleComplete = async (taskId: string, xp: number) => {
     setBusyTaskId(taskId);
     setBanner(null);
-    const prevRank = getRankInfo(activeProfile.xpTotal);
-    const nextRank = getRankInfo(activeProfile.xpTotal + xp);
+    const prevRank = getRankInfo(activeUser.careerXp);
+    const nextRank = getRankInfo(activeUser.careerXp + xp);
     try {
       const comment = commentByTask[taskId]?.trim() || undefined;
       await completeTask(taskId, comment);
@@ -101,12 +103,12 @@ export function BattleBoardScreen() {
       });
       if (nextRank.artTier > prevRank.artTier) {
         setBanner(
-          `EVOLUTION! ${activeProfile.name} reached Tier ${nextRank.artTier} — ${nextRank.title}! (+${xp} XP)`
+          `EVOLUTION! ${activeUser.name} reached Tier ${nextRank.artTier} — ${nextRank.title}! (+${xp} XP)`
         );
       } else if (nextRank.id !== prevRank.id || nextRank.prestigeLevel > prevRank.prestigeLevel) {
-        setBanner(`RANK UP! ${activeProfile.name} promoted to ${nextRank.title}! (+${xp} XP)`);
+        setBanner(`RANK UP! ${activeUser.name} promoted to ${nextRank.title}! (+${xp} XP)`);
       } else {
-        setBanner(`Mission complete! +${xp} XP earned for ${activeProfile.name}.`);
+        setBanner(`Mission complete! +${xp} XP earned for ${activeUser.name}.`);
       }
     } catch (err) {
       setBanner(err instanceof Error ? err.message : 'Could not complete mission.');
@@ -142,20 +144,20 @@ export function BattleBoardScreen() {
         <View style={styles.container}>
           <View style={styles.headerCard}>
             <CharacterAvatar
-              name={activeProfile.name}
-              avatarKey={activeProfile.avatarKey}
-              avatarUrl={activeProfile.avatarUrl}
-              xpTotal={activeProfile.xpTotal}
+              name={activeUser.name}
+              avatarKey={activeUser.avatarKey}
+              avatarUrl={activeUser.avatarUrl}
+              xpTotal={activeUser.careerXp}
               size="md"
               variant="hero"
-              highlighted={activeProfile.role === 'coch'}
+              highlighted={activeMember?.role === 'coch'}
               showTierBadge
             />
             <View style={styles.headerMeta}>
               <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
-              <Text style={styles.playerName}>{activeProfile.name}</Text>
+              <Text style={styles.playerName}>{activeUser.name}</Text>
               <Text style={styles.rankText}>
-                {rank.title} • {activeProfile.xpTotal} XP
+                {rank.title} • {fortXp} Fort XP ({activeUser.careerXp} Career)
               </Text>
               <View style={styles.headerProgressTrack}>
                 <View
@@ -169,7 +171,7 @@ export function BattleBoardScreen() {
                 />
               </View>
             </View>
-            {lockedProfileId ? (
+            {lockedUserId ? (
               <View style={styles.lockedBadge}>
                 <Text style={styles.lockedBadgeText}>Locked</Text>
               </View>
@@ -305,10 +307,10 @@ export function BattleBoardScreen() {
               <View style={styles.missionGrid}>
                 {filteredTasks.map((task) => {
                   const isBusy = busyTaskId === task.id;
-                  const assignedProfile = task.assignedProfileId
-                    ? profileById.get(task.assignedProfileId) ?? null
+                  const assignedMember = task.assignedUserId
+                    ? memberById.get(task.assignedUserId) ?? null
                     : null;
-                  const inProgressByMe = task.activeRun?.profileId === activeProfile.id;
+                  const inProgressByMe = task.activeRun?.userId === activeUser.id;
                   const isCooldown = !task.isAvailable && !task.activeRun;
 
                   return (
@@ -323,10 +325,10 @@ export function BattleBoardScreen() {
                         <TaskArtBadge categoryKey={task.categoryKey} size="hero" />
 
                         <View style={styles.gridTopOverlay}>
-                          {assignedProfile ? (
+                          {assignedMember ? (
                             <View style={styles.assigneeChip}>
                               <Text style={styles.assigneeChipText} numberOfLines={1}>
-                                {assignedProfile.name}
+                                {assignedMember.name}
                               </Text>
                             </View>
                           ) : (
@@ -363,7 +365,7 @@ export function BattleBoardScreen() {
                         ) : task.activeRun ? (
                           <View style={styles.gridStatusPill}>
                             <Text style={styles.gridStatusText} numberOfLines={1}>
-                              {inProgressByMe ? 'Active ↑' : task.activeRun.profileName}
+                              {inProgressByMe ? 'Active ↑' : task.activeRun.userName}
                             </Text>
                           </View>
                         ) : (

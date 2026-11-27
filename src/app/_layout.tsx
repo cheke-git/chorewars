@@ -1,12 +1,54 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 
 import { Colors } from '@/constants/theme';
-import { AppProvider } from '@/context/AppContext';
+import { AppProvider, useApp } from '@/context/AppContext';
+
+function AuthGuard() {
+  const { isHydrating, token, session, fortState, lockedUserId } = useApp();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isHydrating) return;
+
+    const topSegment = segments[0];
+
+    if (!token || !session) {
+      if (topSegment !== 'login') {
+        router.replace('/login');
+      }
+      return;
+    }
+
+    if (session.forts.length === 0) {
+      if (topSegment !== 'wizard') {
+        router.replace('/wizard');
+      }
+      return;
+    }
+
+    if (!fortState) {
+      return;
+    }
+
+    if (topSegment === undefined || topSegment === 'login') {
+      if (lockedUserId || session.supervisedUsers.length === 0) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/profiles');
+      }
+    }
+  }, [fortState, isHydrating, lockedUserId, router, segments, session, token]);
+
+  return null;
+}
 
 export default function RootLayout() {
   return (
     <AppProvider>
+      <AuthGuard />
       <StatusBar style="light" />
       <Stack
         screenOptions={{

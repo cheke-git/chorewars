@@ -2,7 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 
 export interface AuthSession {
-  accountId: string;
+  userId: string;
   email: string;
 }
 
@@ -34,6 +34,17 @@ export function verifySecret(plain: string, stored: string): boolean {
   return timingSafeEqual(derived, keyBuf);
 }
 
+const INVITE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+export function generateInviteCode(length = 6): string {
+  const bytes = randomBytes(length);
+  let code = '';
+  for (let i = 0; i < length; i += 1) {
+    code += INVITE_ALPHABET[bytes[i] % INVITE_ALPHABET.length];
+  }
+  return code;
+}
+
 function getJwtKey(): Uint8Array {
   const secret = process.env.JWT_SECRET;
   if (!secret || secret.length < 16) {
@@ -45,7 +56,7 @@ function getJwtKey(): Uint8Array {
 export async function signAuthToken(session: AuthSession): Promise<string> {
   return new SignJWT({ email: session.email })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(session.accountId)
+    .setSubject(session.userId)
     .setIssuedAt()
     .setExpirationTime('30d')
     .sign(getJwtKey());
@@ -58,7 +69,7 @@ export async function verifyAuthToken(token: string): Promise<AuthSession | null
       return null;
     }
     return {
-      accountId: payload.sub,
+      userId: payload.sub,
       email: payload.email,
     };
   } catch {
@@ -77,6 +88,22 @@ export async function requireAuth(request: Request): Promise<AuthSession> {
     throw new HttpError('Session expired or invalid. Please log in again.', 401);
   }
   return session;
+}
+
+export function extractRouteParam(
+  request: Request,
+  params: Record<string, string> | undefined,
+  key: string,
+  pattern: RegExp
+): string {
+  if (params?.[key]) {
+    return params[key];
+  }
+  const match = new URL(request.url).pathname.match(pattern);
+  if (!match?.[1]) {
+    throw new HttpError(`Missing ${key} parameter.`, 400);
+  }
+  return match[1];
 }
 
 export function handleApiError(error: unknown): Response {

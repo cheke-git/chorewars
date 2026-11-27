@@ -1,22 +1,9 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Colors } from '@/constants/theme';
-import { useApp } from '@/context/AppContext';
 
 export default function TabsLayout() {
-  const { token, fortState, activeProfile } = useApp();
-
-  if (!token) {
-    return <Redirect href="/" />;
-  }
-  if (!fortState) {
-    return <Redirect href="/wizard" />;
-  }
-  if (!activeProfile) {
-    return <Redirect href="/profiles" />;
-  }
-
   return (
     <Tabs
       screenOptions={{

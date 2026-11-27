@@ -1,13 +1,69 @@
 export type HomeType = 'house' | 'apartment' | 'studio';
-export type ProfileRole = 'coch' | 'reviewer' | 'recruit';
-export type RecurrenceType = 'daily' | 'cooldown' | 'weekly' | 'monthly' | 'one_off';
+export type MembershipRole = 'coch' | 'reviewer' | 'recruit';
+export type ProfileRole = MembershipRole;
+export type RecurrenceType = 'daily' | 'cooldown' | 'weekly' | 'monthly' | 'one_off' | 'on_demand';
 export type ValidationMode = 'honor' | 'photo';
-export type TaskRunStatus = 'in_progress' | 'pending_review' | 'approved' | 'rejected' | 'expired';
+export type TaskRunStatus =
+  | 'in_progress'
+  | 'pending_review'
+  | 'approved'
+  | 'rejected'
+  | 'expired'
+  | 'undone';
 export type RewardType = 'individual_goal' | 'bounty_pool';
+export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'revoked';
 
-export interface AccountDTO {
+export interface UserDTO {
   id: string;
-  email: string;
+  email: string | null;
+  guardianUserId: string | null;
+  isSupervised: boolean;
+  hasGuardianPin: boolean;
+  name: string;
+  isAdult: boolean;
+  avatarKey: string;
+  avatarUrl: string | null;
+  careerXp: number;
+}
+
+export interface FortSummaryDTO {
+  id: string;
+  name: string;
+  homeType: HomeType;
+  role: MembershipRole;
+  fortXp: number;
+  memberUserIds: string[];
+}
+
+export interface SupervisedFortMembershipDTO {
+  membershipId: string;
+  fortId: string;
+  fortName: string;
+  role: MembershipRole;
+  fortXp: number;
+}
+
+export interface SupervisedUserDTO extends UserDTO {
+  forts: SupervisedFortMembershipDTO[];
+}
+
+export interface InvitationDTO {
+  id: string;
+  fortId: string;
+  fortName: string;
+  invitedByName: string;
+  targetEmail: string;
+  role: MembershipRole;
+  note: string | null;
+  status: InvitationStatus;
+  createdAt: string;
+}
+
+export interface SessionPayloadDTO {
+  user: UserDTO;
+  supervisedUsers: SupervisedUserDTO[];
+  forts: FortSummaryDTO[];
+  pendingInvitations: InvitationDTO[];
 }
 
 export interface FortDTO {
@@ -19,17 +75,22 @@ export interface FortDTO {
   hasKitchen: boolean;
   hasYard: boolean;
   hasPets: boolean;
+  inviteCode: string;
 }
 
-export interface ProfileDTO {
-  id: string;
+export interface FortMemberDTO {
+  membershipId: string;
+  id: string; // user.id
   fortId: string;
   name: string;
-  role: ProfileRole;
+  role: MembershipRole;
   isAdult: boolean;
+  isSupervised: boolean;
+  guardianUserId: string | null;
   avatarKey: string;
   avatarUrl: string | null;
-  xpTotal: number;
+  careerXp: number;
+  fortXp: number;
 }
 
 export interface AreaDTO {
@@ -44,10 +105,18 @@ export interface AreaDTO {
 
 export interface ActiveRunSummary {
   id: string;
-  profileId: string;
-  profileName: string;
+  userId: string;
+  userName: string;
   startedAt: string;
   expiresAt: string | null;
+}
+
+export interface LastCompletedRunSummary {
+  id: string;
+  userId: string;
+  userName: string;
+  completedAt: string;
+  xpAwarded: number;
 }
 
 export interface TaskDTO {
@@ -60,9 +129,10 @@ export interface TaskDTO {
   recurrenceType: RecurrenceType;
   cooldownDays: number | null;
   validationMode: ValidationMode;
-  assignedProfileId: string | null;
+  assignedUserId: string | null;
   isActive: boolean;
   activeRun: ActiveRunSummary | null;
+  lastCompletedRun: LastCompletedRunSummary | null;
   lastCompletedAt: string | null;
   nextAvailableAt: string | null;
   isAvailable: boolean;
@@ -72,8 +142,8 @@ export interface TaskRunDTO {
   id: string;
   taskId: string;
   taskTitle: string;
-  profileId: string;
-  profileName: string;
+  userId: string;
+  userName: string;
   status: TaskRunStatus;
   startedAt: string;
   completedAt: string | null;
@@ -89,17 +159,18 @@ export interface RewardDTO {
   type: RewardType;
   targetXp: number;
   poolAmountCents: number | null;
-  excludedProfileIds: string[];
+  excludedUserIds: string[];
   isActive: boolean;
 }
 
 export interface FortStateDTO {
   fort: FortDTO;
-  profiles: ProfileDTO[];
+  members: FortMemberDTO[];
   areas: AreaDTO[];
   tasks: TaskDTO[];
   recentRuns: TaskRunDTO[];
   rewards: RewardDTO[];
+  invitations: InvitationDTO[];
 }
 
 export {
@@ -132,6 +203,8 @@ export function formatRecurrence(
       return 'Monthly';
     case 'one_off':
       return 'One-Off';
+    case 'on_demand':
+      return 'Anytime';
     default:
       return 'Daily';
   }

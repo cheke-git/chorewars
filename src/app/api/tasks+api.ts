@@ -2,32 +2,35 @@ import { z } from 'zod';
 
 import { getDb, tasks } from '@/db';
 import { HttpError, handleApiError, requireAuth } from '@/server/auth';
-import { buildFortState, requireFortByAccountId } from '@/server/fortState';
+import { buildFortState, requireFortCoch } from '@/server/fortState';
 
 const createTaskSchema = z.object({
+  fortId: z.string().uuid('Invalid Fort ID.'),
   title: z.string().trim().min(2, 'Task title is required.').max(80),
   areaId: z.string().uuid().nullable().optional(),
   categoryKey: z.string().trim().min(1).default('custom'),
   xp: z.number().int().min(1).max(500).default(10),
-  recurrenceType: z.enum(['daily', 'cooldown', 'weekly', 'monthly', 'one_off']).default('daily'),
+  recurrenceType: z
+    .enum(['daily', 'cooldown', 'weekly', 'monthly', 'one_off', 'on_demand'])
+    .default('daily'),
   cooldownDays: z.number().int().min(1).max(60).nullable().optional(),
-  assignedProfileId: z.string().uuid().nullable().optional(),
+  assignedUserId: z.string().uuid().nullable().optional(),
 });
 
 export async function POST(request: Request) {
   try {
-    const session = await requireAuth(request);
-    const fort = await requireFortByAccountId(session.accountId);
-
+    const auth = await requireAuth(request);
     const body = await request.json();
     const parsed = createTaskSchema.safeParse(body);
     if (!parsed.success) {
       throw new HttpError(parsed.error.issues[0]?.message ?? 'Invalid task data.', 400);
     }
 
+    await requireFortCoch(parsed.data.fortId, auth.userId);
+
     const db = getDb();
     await db.insert(tasks).values({
-      fortId: fort.id,
+      fortId: parsed.data.fortId,
       areaId: parsed.data.areaId ?? null,
       title: parsed.data.title,
       categoryKey: parsed.data.categoryKey,
@@ -36,10 +39,10 @@ export async function POST(request: Request) {
       cooldownDays:
         parsed.data.recurrenceType === 'cooldown' ? (parsed.data.cooldownDays ?? 3) : null,
       validationMode: 'honor',
-      assignedProfileId: parsed.data.assignedProfileId ?? null,
+      assignedUserId: parsed.data.assignedUserId ?? null,
     });
 
-    const state = await buildFortState(fort.id);
+    const state = await buildFortState(parsed.data.fortId);
     return Response.json(state, { status: 201 });
   } catch (error) {
     return handleApiError(error);

@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { accounts, getDb } from '@/db';
+import { getDb, users } from '@/db';
 import { HttpError, handleApiError, signAuthToken, verifySecret } from '@/server/auth';
-import { getFortByAccountId } from '@/server/fortState';
+import { buildSessionPayload } from '@/server/fortState';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address.'),
@@ -21,26 +21,22 @@ export async function POST(request: Request) {
     const email = parsed.data.email.toLowerCase();
     const db = getDb();
 
-    const [account] = await db
-      .select()
-      .from(accounts)
-      .where(eq(accounts.email, email))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-    if (!account || !verifySecret(parsed.data.password, account.passwordHash)) {
+    if (!user || !user.passwordHash || !verifySecret(parsed.data.password, user.passwordHash)) {
       throw new HttpError('Invalid email or password.', 401);
     }
 
-    const fort = await getFortByAccountId(account.id);
     const token = await signAuthToken({
-      accountId: account.id,
-      email: account.email,
+      userId: user.id,
+      email: user.email ?? email,
     });
+
+    const session = await buildSessionPayload(user.id);
 
     return Response.json({
       token,
-      account: { id: account.id, email: account.email },
-      hasFort: Boolean(fort),
+      session,
     });
   } catch (error) {
     return handleApiError(error);

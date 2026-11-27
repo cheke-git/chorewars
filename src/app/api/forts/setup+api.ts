@@ -1,15 +1,23 @@
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { areas, forts, getDb, profiles, rewards, tasks } from '@/db';
-import { HttpError, handleApiError, hashSecret, requireAuth } from '@/server/auth';
-import { buildFortState, getFortByAccountId } from '@/server/fortState';
+import { areas, fortMemberships, forts, getDb, rewards, tasks, users } from '@/db';
+import {
+  HttpError,
+  generateInviteCode,
+  handleApiError,
+  hashSecret,
+  requireAuth,
+} from '@/server/auth';
+import { buildFortState, buildSessionPayload } from '@/server/fortState';
 import { generateStarterPlan } from '@/shared/templates';
 
-const memberSchema = z.object({
+const supervisedMemberSchema = z.object({
+  existingUserId: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(40),
-  role: z.enum(['coch', 'reviewer', 'recruit']),
-  isAdult: z.boolean(),
-  avatarKey: z.string().min(1),
+  role: z.enum(['reviewer', 'recruit']).default('recruit'),
+  isAdult: z.boolean().default(false),
+  avatarKey: z.string().min(1).default('kid-male'),
 });
 
 const setupSchema = z.object({
@@ -20,8 +28,13 @@ const setupSchema = z.object({
   hasKitchen: z.boolean(),
   hasYard: z.boolean(),
   hasPets: z.boolean(),
-  cochPin: z.string().regex(/^\d{4}$/, 'CoCh PIN must be exactly 4 digits.'),
-  members: z.array(memberSchema).min(1, 'Add at least the Commander in Chief profile.'),
+  cochName: z.string().trim().min(1).max(40).optional(),
+  cochAvatarKey: z.string().min(1).optional(),
+  cochPin: z
+    .string()
+    .regex(/^\d{4}$/, 'PIN must be exactly 4 digits.')
+    .optional(),
+  supervisedMembers: z.array(supervisedMemberSchema).default([]),
   starterReward: z
     .object({
       title: z.string().trim().max(80).optional(),
@@ -33,12 +46,7 @@ const setupSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await requireAuth(request);
-    const existingFort = await getFortByAccountId(session.accountId);
-    if (existingFort) {
-      throw new HttpError('This account already has a Fort set up.', 409);
-    }
-
+    const auth = await requireAuth(request);
     const body = await request.json();
     const parsed = setupSchema.safeParse(body);
     if (!parsed.success) {
@@ -48,10 +56,20 @@ export async function POST(request: Request) {
     const data = parsed.data;
     const db = getDb();
 
+    // Update CoCh user profile/PIN if provided during setup
+    const userUpdates: Partial<typeof users.$inferInsert> = {};
+    if (data.cochName) userUpdates.name = data.cochName;
+    if (data.cochAvatarKey) userUpdates.avatarKey = data.cochAvatarKey;
+    if (data.cochPin) userUpdates.guardianPinHash = hashSecret(data.cochPin);
+
+    if (Object.keys(userUpdates).length > 0) {
+      await db.update(users).set(userUpdates).where(eq(users.id, auth.userId));
+    }
+
     const [createdFort] = await db
       .insert(forts)
       .values({
-        ownerAccountId: session.accountId,
+        createdByUserId: auth.userId,
         name: data.name,
         homeType: data.homeType,
         bedroomCount: data.bedroomCount,
@@ -59,22 +77,55 @@ export async function POST(request: Request) {
         hasKitchen: data.hasKitchen,
         hasYard: data.hasYard,
         hasPets: data.hasPets,
-        cochPinHash: hashSecret(data.cochPin),
+        inviteCode: generateInviteCode(6),
       })
       .returning();
 
-    const createdProfiles = await db
-      .insert(profiles)
-      .values(
-        data.members.map((member) => ({
-          fortId: createdFort.id,
-          name: member.name,
-          role: member.role,
-          isAdult: member.isAdult,
-          avatarKey: member.avatarKey,
-        }))
-      )
-      .returning();
+    // Add creator as CoCh
+    await db.insert(fortMemberships).values({
+      fortId: createdFort.id,
+      userId: auth.userId,
+      role: 'coch',
+    });
+
+    const fortUserRecords: { id: string; isAdult: boolean }[] = [
+      { id: auth.userId, isAdult: true },
+    ];
+
+    for (const member of data.supervisedMembers) {
+      let memberUserId = member.existingUserId;
+      let isAdult = member.isAdult;
+
+      if (memberUserId) {
+        const [existing] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, memberUserId))
+          .limit(1);
+        if (!existing || existing.guardianUserId !== auth.userId) {
+          throw new HttpError('Invalid supervised user selection.', 403);
+        }
+        isAdult = existing.isAdult;
+      } else {
+        const [createdKid] = await db
+          .insert(users)
+          .values({
+            guardianUserId: auth.userId,
+            name: member.name,
+            avatarKey: member.avatarKey,
+            isAdult: member.isAdult,
+          })
+          .returning();
+        memberUserId = createdKid.id;
+      }
+
+      await db.insert(fortMemberships).values({
+        fortId: createdFort.id,
+        userId: memberUserId,
+        role: member.role,
+      });
+      fortUserRecords.push({ id: memberUserId, isAdult });
+    }
 
     const plan = generateStarterPlan({
       homeType: data.homeType,
@@ -126,21 +177,25 @@ export async function POST(request: Request) {
 
     if (data.starterReward) {
       const excludedIds = data.starterReward.excludeAdults
-        ? createdProfiles.filter((p) => p.isAdult).map((p) => p.id)
+        ? fortUserRecords.filter((u) => u.isAdult).map((u) => u.id)
         : [];
-      const allExcluded = excludedIds.length === createdProfiles.length;
+      const allExcluded = excludedIds.length === fortUserRecords.length;
 
       await db.insert(rewards).values({
         fortId: createdFort.id,
         title: data.starterReward.title?.trim() || null,
         type: 'individual_goal',
         targetXp: data.starterReward.targetXp,
-        excludedProfileIds: allExcluded ? [] : excludedIds,
+        excludedUserIds: allExcluded ? [] : excludedIds,
       });
     }
 
-    const state = await buildFortState(createdFort.id);
-    return Response.json(state, { status: 201 });
+    const [fortState, session] = await Promise.all([
+      buildFortState(createdFort.id),
+      buildSessionPayload(auth.userId),
+    ]);
+
+    return Response.json({ fortState, session }, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,15 +1,11 @@
 import { handleApiError, requireAuth } from '@/server/auth';
-import { getFortByAccountId } from '@/server/fortState';
+import { buildSessionPayload } from '@/server/fortState';
 
 export async function GET(request: Request) {
   try {
-    const session = await requireAuth(request);
-    const fort = await getFortByAccountId(session.accountId);
-
-    return Response.json({
-      account: { id: session.accountId, email: session.email },
-      hasFort: Boolean(fort),
-    });
+    const auth = await requireAuth(request);
+    const session = await buildSessionPayload(auth.userId);
+    return Response.json(session);
   } catch (error) {
     return handleApiError(error);
   }

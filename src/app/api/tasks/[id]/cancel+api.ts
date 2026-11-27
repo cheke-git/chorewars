@@ -1,39 +1,34 @@
 import { and, eq } from 'drizzle-orm';
 
-import { getDb, taskRuns } from '@/db';
-import { HttpError, handleApiError, requireAuth } from '@/server/auth';
-import { buildFortState, requireFortByAccountId } from '@/server/fortState';
-
-function extractTaskId(request: Request, params?: Record<string, string>): string {
-  if (params?.id) {
-    return params.id;
-  }
-  const match = new URL(request.url).pathname.match(/\/api\/tasks\/([^/]+)\/cancel/);
-  if (!match) {
-    throw new HttpError('Missing task ID.', 400);
-  }
-  return match[1];
-}
+import { getDb, taskRuns, tasks } from '@/db';
+import { HttpError, extractRouteParam, handleApiError, requireAuth } from '@/server/auth';
+import { buildFortState, requireFortAccessForSession } from '@/server/fortState';
 
 export async function POST(request: Request, params?: Record<string, string>) {
   try {
-    const session = await requireAuth(request);
-    const fort = await requireFortByAccountId(session.accountId);
-    const taskId = extractTaskId(request, params);
+    const auth = await requireAuth(request);
+    const taskId = extractRouteParam(request, params, 'id', /\/api\/tasks\/([^/]+)\/cancel/);
 
     const db = getDb();
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!task) {
+      throw new HttpError('Task not found.', 404);
+    }
+
+    await requireFortAccessForSession(task.fortId, auth.userId);
+
     await db
       .update(taskRuns)
       .set({ status: 'expired' })
       .where(
         and(
           eq(taskRuns.taskId, taskId),
-          eq(taskRuns.fortId, fort.id),
+          eq(taskRuns.fortId, task.fortId),
           eq(taskRuns.status, 'in_progress')
         )
       );
 
-    const state = await buildFortState(fort.id);
+    const state = await buildFortState(task.fortId);
     return Response.json(state);
   } catch (error) {
     return handleApiError(error);

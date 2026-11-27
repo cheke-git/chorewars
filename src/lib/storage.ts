@@ -3,8 +3,9 @@ import { Platform } from 'react-native';
 
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'cw_auth_token',
-  ACTIVE_PROFILE_ID: 'cw_active_profile_id',
-  LOCKED_PROFILE_ID: 'cw_locked_profile_id',
+  ACTIVE_USER_ID: 'cw_active_user_id',
+  ACTIVE_FORT_ID: 'cw_active_fort_id',
+  LOCKED_USER_ID: 'cw_locked_user_id',
 } as const;
 
 export async function getStoredValue(key: string): Promise<string | null> {
