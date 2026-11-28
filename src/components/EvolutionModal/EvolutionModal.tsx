@@ -47,18 +47,12 @@ function EvolutionVideoStage({
 }: EvolutionVideoStageProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
+  const [showPlayFallback, setShowPlayFallback] = useState(false);
+  const hasEndedRef = useRef(false);
   const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isPortraitViewport = height >= width;
-
-  useEffect(() => {
-    return () => {
-      if (endTimerRef.current) {
-        clearTimeout(endTimerRef.current);
-      }
-    };
-  }, []);
 
   const player = useVideoPlayer(source, (p) => {
     p.loop = false;
@@ -66,11 +60,41 @@ function EvolutionVideoStage({
     p.play();
   });
 
+  useEffect(() => {
+    // On web, VideoView mounts the <video> element in a child effect after useVideoPlayer's
+    // setup callback runs, so calling play() here triggers playback once mounted.
+    const startTimer = setTimeout(() => {
+      if (!hasEndedRef.current) {
+        player.play();
+      }
+    }, 50);
+
+    // Only show the manual tap-to-play overlay if autoplay genuinely did not start.
+    const fallbackTimer = setTimeout(() => {
+      setShowPlayFallback(true);
+    }, 650);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(fallbackTimer);
+      if (endTimerRef.current) {
+        clearTimeout(endTimerRef.current);
+      }
+    };
+  }, [player]);
+
+  useEventListener(player, 'statusChange', ({ status }) => {
+    if (status === 'readyToPlay' && !hasEndedRef.current) {
+      player.play();
+    }
+  });
+
   useEventListener(player, 'playingChange', (payload) => {
     setIsPlaying(payload.isPlaying);
   });
 
   useEventListener(player, 'playToEnd', () => {
+    hasEndedRef.current = true;
     setHasEnded(true);
     if (endTimerRef.current) {
       clearTimeout(endTimerRef.current);
@@ -92,6 +116,7 @@ function EvolutionVideoStage({
           player={player}
           style={styles.video}
           nativeControls={false}
+          playsInline
           contentFit={isPortraitViewport ? 'cover' : 'contain'}
         />
 
@@ -111,7 +136,7 @@ function EvolutionVideoStage({
           </Pressable>
         </View>
 
-        {!isPlaying && !hasEnded ? (
+        {showPlayFallback && !isPlaying && !hasEnded ? (
           <Pressable
             onPress={handleTapPlay}
             style={styles.playOverlay}
