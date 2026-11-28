@@ -62,6 +62,7 @@ export function ScoreboardScreen() {
                       avatarKey={member.avatarKey}
                       avatarUrl={member.avatarUrl}
                       xpTotal={member.careerXp}
+                      claimedArtTier={member.claimedArtTier}
                       size="sm"
                       variant="hero"
                       highlighted={index === 0}

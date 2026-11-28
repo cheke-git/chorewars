@@ -142,6 +142,7 @@ interface AppContextValue {
     userId: string,
     payload: { name?: string; avatarKey?: string; isAdult?: boolean }
   ) => Promise<void>;
+  claimEvolution: (userId: string, targetTier?: number) => Promise<void>;
   deleteSupervisedUser: (userId: string) => Promise<void>;
   setupFort: (payload: SetupFortPayload) => Promise<FortStateDTO>;
   joinFort: (inviteCode: string, userIds?: string[]) => Promise<FortStateDTO>;
@@ -478,6 +479,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         body: payload,
         token,
       });
+      setSession(nextSession);
+      if (activeFortId) {
+        await loadFortById(token, activeFortId);
+      }
+    },
+    [activeFortId, loadFortById, token]
+  );
+
+  const claimEvolution = useCallback(
+    async (userId: string, targetTier?: number) => {
+      if (!token) throw new Error('Not authenticated.');
+      const nextSession = await apiRequest<SessionPayloadDTO>(
+        `/api/users/${userId}/claim-evolution`,
+        {
+          method: 'POST',
+          body: targetTier ? { targetTier } : {},
+          token,
+        }
+      );
       setSession(nextSession);
       if (activeFortId) {
         await loadFortById(token, activeFortId);
@@ -883,6 +903,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateMe,
       createSupervisedUser,
       updateUser,
+      claimEvolution,
       deleteSupervisedUser,
       setupFort,
       joinFort,
@@ -931,6 +952,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateMe,
       createSupervisedUser,
       updateUser,
+      claimEvolution,
       deleteSupervisedUser,
       setupFort,
       joinFort,

@@ -73,6 +73,32 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+  evolutionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.brandOrange,
+    borderWidth: 1.5,
+    borderColor: '#FFD166',
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+  },
+  evolutionBannerMeta: {
+    flex: 1,
+    gap: 2,
+  },
+  evolutionBannerTitle: {
+    color: Colors.textPrimary,
+    fontSize: Typography.label,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  evolutionBannerSub: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: Typography.caption,
+    fontWeight: '600',
+  },
   section: {
     gap: Spacing.sm,
   },

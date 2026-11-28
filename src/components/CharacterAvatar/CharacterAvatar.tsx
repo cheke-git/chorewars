@@ -4,6 +4,7 @@ import {
   getAvatarPreset,
   resolveCharacterPortrait,
 } from '@/constants/characterArt';
+import { getEffectiveArtTier } from '@/constants/evolutionVideos';
 import { getRankInfo } from '@/constants/ranks';
 
 import { styles } from './CharacterAvatar.styles';
@@ -13,6 +14,8 @@ interface CharacterAvatarProps {
   avatarKey: string;
   avatarUrl?: string | null;
   xpTotal?: number;
+  claimedArtTier?: number;
+  tierOverride?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'badge' | 'hero';
   highlighted?: boolean;
@@ -24,6 +27,8 @@ export function CharacterAvatar({
   avatarKey,
   avatarUrl,
   xpTotal = 0,
+  claimedArtTier,
+  tierOverride,
   size = 'md',
   variant = 'badge',
   highlighted = false,
@@ -31,9 +36,13 @@ export function CharacterAvatar({
 }: CharacterAvatarProps) {
   const preset = getAvatarPreset(avatarKey);
   const rank = getRankInfo(xpTotal);
+  const displayTier =
+    tierOverride !== undefined
+      ? tierOverride
+      : getEffectiveArtTier(rank.artTier, claimedArtTier);
   const portraitSource = avatarUrl
     ? { uri: avatarUrl }
-    : resolveCharacterPortrait(avatarKey, rank.artTier);
+    : resolveCharacterPortrait(avatarKey, displayTier);
 
   const initials = name
     .trim()
@@ -57,21 +66,21 @@ export function CharacterAvatar({
           style={[
             styles.heroGlow,
             {
-              borderColor: highlighted || rank.artTier > 1 ? rank.frameColor : 'rgba(255,255,255,0.12)',
+              borderColor: highlighted || displayTier > 1 ? rank.frameColor : 'rgba(255,255,255,0.12)',
             },
           ]}
         />
         <Image source={portraitSource} style={styles.heroImage} resizeMode="contain" />
         {showTierBadge ? (
           <View style={[styles.tierBadgeHero, { backgroundColor: rank.frameColor }]}>
-            <Text style={styles.tierBadgeText}>T{rank.artTier}</Text>
+            <Text style={styles.tierBadgeText}>T{displayTier}</Text>
           </View>
         ) : null}
       </View>
     );
   }
 
-  const borderColor = highlighted || rank.artTier > 1 ? rank.frameColor : undefined;
+  const borderColor = highlighted || displayTier > 1 ? rank.frameColor : undefined;
 
   return (
     <View style={styles.wrapper}>
@@ -101,7 +110,7 @@ export function CharacterAvatar({
 
       {showTierBadge && size !== 'sm' ? (
         <View style={[styles.tierBadge, { backgroundColor: rank.frameColor }]}>
-          <Text style={styles.tierBadgeText}>T{rank.artTier}</Text>
+          <Text style={styles.tierBadgeText}>T{displayTier}</Text>
         </View>
       ) : null}
     </View>

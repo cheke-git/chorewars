@@ -12,6 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
+import {
+  EvolutionModal,
+  type EvolutionCeremonySpec,
+} from '@/components/EvolutionModal/EvolutionModal';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { FortSwitcher } from '@/components/FortSwitcher/FortSwitcher';
 import { PinModal } from '@/components/PinModal/PinModal';
@@ -56,6 +60,7 @@ export function BattleBoardScreen() {
     undoTask,
     updateTask,
     deleteTask,
+    claimEvolution,
   } = useApp();
 
   const { showSuccess, showError } = useToast();
@@ -66,6 +71,7 @@ export function BattleBoardScreen() {
   const [commentByTask, setCommentByTask] = useState<Record<string, string>>({});
   const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
   const [pendingEditTask, setPendingEditTask] = useState<TaskDTO | null>(null);
+  const [ceremony, setCeremony] = useState<EvolutionCeremonySpec | null>(null);
 
   const filterScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [filterScrollX, setFilterScrollX] = useState(0);
@@ -87,6 +93,8 @@ export function BattleBoardScreen() {
   const rank = getRankInfo(activeUser.careerXp);
   const fortXp = activeMember?.fortXp ?? 0;
   const isActiveUserCoch = Boolean(!activeUser.isSupervised && activeMember?.role === 'coch');
+  const hasPendingEvolution = rank.artTier > activeUser.claimedArtTier;
+  const nextEvolutionTier = Math.min(rank.artTier, activeUser.claimedArtTier + 1);
 
   const myInProgressTasks = fortState.tasks.filter(
     (t) => t.activeRun?.userId === activeUser.id
@@ -162,11 +170,14 @@ export function BattleBoardScreen() {
         delete next[taskId];
         return next;
       });
-      if (nextRank.artTier > prevRank.artTier) {
-        showSuccess(
-          `EVOLUTION! ${activeUser.name} reached Tier ${nextRank.artTier} — ${nextRank.title}! (+${xp} XP)`,
-          7000
-        );
+      if (nextRank.artTier > activeUser.claimedArtTier) {
+        const nextTier = Math.min(nextRank.artTier, activeUser.claimedArtTier + 1);
+        setCeremony({
+          user: { ...activeUser, careerXp: activeUser.careerXp + xp },
+          fromTier: activeUser.claimedArtTier,
+          toTier: nextTier,
+          mode: 'claim',
+        });
       } else if (nextRank.id !== prevRank.id || nextRank.prestigeLevel > prevRank.prestigeLevel) {
         showSuccess(
           `RANK UP! ${activeUser.name} promoted to ${nextRank.title}! (+${xp} XP)`,
@@ -238,6 +249,7 @@ export function BattleBoardScreen() {
                 avatarKey={activeUser.avatarKey}
                 avatarUrl={activeUser.avatarUrl}
                 xpTotal={activeUser.careerXp}
+                claimedArtTier={activeUser.claimedArtTier}
                 size="md"
                 variant="hero"
                 highlighted={activeMember?.role === 'coch'}
@@ -267,6 +279,31 @@ export function BattleBoardScreen() {
                 </View>
               ) : null}
             </Pressable>
+
+            {hasPendingEvolution ? (
+              <Pressable
+                onPress={() =>
+                  setCeremony({
+                    user: activeUser,
+                    fromTier: activeUser.claimedArtTier,
+                    toTier: nextEvolutionTier,
+                    mode: 'claim',
+                  })
+                }
+                style={styles.evolutionBanner}
+                accessibilityRole="button">
+                <Feather name="zap" size={18} color={Colors.textPrimary} />
+                <View style={styles.evolutionBannerMeta}>
+                  <Text style={styles.evolutionBannerTitle}>
+                    EVOLUTION READY — TIER {nextEvolutionTier}!
+                  </Text>
+                  <Text style={styles.evolutionBannerSub}>
+                    Tap to watch your transformation and equip new gear
+                  </Text>
+                </View>
+                <Feather name="play-circle" size={22} color={Colors.textPrimary} />
+              </Pressable>
+            ) : null}
 
             {myInProgressTasks.length > 0 ? (
               <View style={styles.section}>
@@ -581,6 +618,15 @@ export function BattleBoardScreen() {
           onArchive={async (taskId) => {
             await deleteTask(taskId);
             showSuccess('Mission archived.');
+          }}
+        />
+
+        <EvolutionModal
+          ceremony={ceremony}
+          onClose={() => setCeremony(null)}
+          onClaim={async (userId, toTier) => {
+            await claimEvolution(userId, toTier);
+            showSuccess(`Tier ${toTier} armor equipped!`, 6000);
           }}
         />
       </SafeAreaView>

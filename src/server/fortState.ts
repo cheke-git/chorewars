@@ -48,6 +48,7 @@ export function toUserDTO(u: typeof users.$inferSelect): UserDTO {
     avatarKey: u.avatarKey,
     avatarUrl: u.avatarUrl,
     careerXp: u.careerXp,
+    claimedArtTier: u.claimedArtTier,
   };
 }
 
@@ -412,6 +413,7 @@ export async function buildFortState(fortId: string): Promise<FortStateDTO> {
         avatarKey: u.avatarKey,
         avatarUrl: u.avatarUrl,
         careerXp: u.careerXp,
+        claimedArtTier: u.claimedArtTier,
         fortXp: m.fortXp,
       };
     })

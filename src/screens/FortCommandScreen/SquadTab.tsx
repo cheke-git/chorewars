@@ -393,6 +393,7 @@ export function SquadTab({ saving, runAction }: SquadTabProps) {
                     avatarKey={member.avatarKey}
                     avatarUrl={member.avatarUrl}
                     xpTotal={member.careerXp}
+                    claimedArtTier={member.claimedArtTier}
                     size="sm"
                     variant="hero"
                   />

@@ -58,6 +58,7 @@ export function ProfilePickerScreen() {
                       avatarKey={profile.avatarKey}
                       avatarUrl={profile.avatarUrl}
                       xpTotal={profile.careerXp}
+                      claimedArtTier={profile.claimedArtTier}
                       size="xl"
                       variant="hero"
                       highlighted={!profile.isSupervised}

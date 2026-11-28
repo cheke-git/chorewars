@@ -24,6 +24,7 @@ export interface UserDTO {
   avatarKey: string;
   avatarUrl: string | null;
   careerXp: number;
+  claimedArtTier: number;
 }
 
 export interface FortSummaryDTO {
@@ -90,6 +91,7 @@ export interface FortMemberDTO {
   avatarKey: string;
   avatarUrl: string | null;
   careerXp: number;
+  claimedArtTier: number;
   fortXp: number;
 }
 

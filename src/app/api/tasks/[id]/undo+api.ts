@@ -8,6 +8,7 @@ import {
   buildFortState,
   buildSessionPayload,
 } from '@/server/fortState';
+import { getRankInfo } from '@/shared/types';
 
 const undoSchema = z.object({
   actingUserId: z.string().uuid().optional(),
@@ -82,13 +83,14 @@ export async function POST(request: Request, params?: Record<string, string>) {
       .where(eq(taskRuns.id, latestRun.id));
 
     if (latestRun.xpAwarded > 0) {
-      await Promise.all([
+      const [[updatedUser]] = await Promise.all([
         db
           .update(users)
           .set({
             careerXp: sql`GREATEST(0, ${users.careerXp} - ${latestRun.xpAwarded})`,
           })
-          .where(eq(users.id, latestRun.userId)),
+          .where(eq(users.id, latestRun.userId))
+          .returning({ careerXp: users.careerXp, claimedArtTier: users.claimedArtTier }),
         db
           .update(fortMemberships)
           .set({
@@ -101,6 +103,16 @@ export async function POST(request: Request, params?: Record<string, string>) {
             )
           ),
       ]);
+
+      if (updatedUser) {
+        const nextEarnedTier = getRankInfo(updatedUser.careerXp).artTier;
+        if (updatedUser.claimedArtTier > nextEarnedTier) {
+          await db
+            .update(users)
+            .set({ claimedArtTier: nextEarnedTier })
+            .where(eq(users.id, latestRun.userId));
+        }
+      }
     }
 
     const [fortState, session] = await Promise.all([

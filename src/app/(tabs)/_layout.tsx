@@ -3,6 +3,7 @@ import { Image, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { resolveCharacterPortrait } from '@/constants/characterArt';
+import { getEffectiveArtTier } from '@/constants/evolutionVideos';
 import { getRankInfo } from '@/constants/ranks';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
@@ -16,7 +17,10 @@ export default function TabsLayout() {
     session && activeUser && !activeUser.isSupervised ? session.pendingInvitations.length : 0;
 
   const activePortrait = activeUser
-    ? resolveCharacterPortrait(activeUser.avatarKey, getRankInfo(activeUser.careerXp).artTier)
+    ? resolveCharacterPortrait(
+        activeUser.avatarKey,
+        getEffectiveArtTier(getRankInfo(activeUser.careerXp).artTier, activeUser.claimedArtTier)
+      )
     : null;
 
   const profileTabTitle = activeUser?.name ? activeUser.name.slice(0, 12) : 'Profile';

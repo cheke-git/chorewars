@@ -22,6 +22,7 @@ export const users = pgTable('users', {
   avatarKey: text('avatar_key').notNull().default('parent-male'),
   avatarUrl: text('avatar_url'),
   careerXp: integer('career_xp').notNull().default(0),
+  claimedArtTier: integer('claimed_art_tier').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

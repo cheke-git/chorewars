@@ -6,6 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/CharacterAvatar/CharacterAvatar';
 import { CharacterPicker } from '@/components/CharacterPicker/CharacterPicker';
+import {
+  EvolutionModal,
+  type EvolutionCeremonySpec,
+} from '@/components/EvolutionModal/EvolutionModal';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
 import { PinModal } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
@@ -27,6 +31,7 @@ export function ProfileScreen() {
     selectFort,
     updateMe,
     updateUser,
+    claimEvolution,
     joinFort,
     leaveFort,
     respondToInvitation,
@@ -42,6 +47,7 @@ export function ProfileScreen() {
   const [selectedJoinUserIds, setSelectedJoinUserIds] = useState<string[] | null>(null);
   const [inviteUserSelection, setInviteUserSelection] = useState<Record<string, string[]>>({});
   const [unlockPinModalOpen, setUnlockPinModalOpen] = useState(false);
+  const [ceremony, setCeremony] = useState<EvolutionCeremonySpec | null>(null);
 
   const { showSuccess, showError } = useToast();
 
@@ -63,6 +69,15 @@ export function ProfileScreen() {
   const isActingAsGuardian = !activeUser.isSupervised;
   const familyUsers = [session.user, ...session.supervisedUsers];
   const rank = getRankInfo(activeUser.careerXp);
+  const hasPendingEvolution = rank.artTier > activeUser.claimedArtTier;
+  const nextEvolutionTier = Math.min(rank.artTier, activeUser.claimedArtTier + 1);
+  const unlockedTransitions: { fromTier: number; toTier: number }[] = [];
+  if (activeUser.claimedArtTier >= 2) {
+    unlockedTransitions.push({ fromTier: 1, toTier: 2 });
+  }
+  if (activeUser.claimedArtTier >= 3) {
+    unlockedTransitions.push({ fromTier: 2, toTier: 3 });
+  }
 
   const runAction = async (fn: () => Promise<void>, successText: string) => {
     setSaving(true);
@@ -179,6 +194,7 @@ export function ProfileScreen() {
                   avatarKey={displayedAvatar}
                   avatarUrl={activeUser.avatarUrl}
                   xpTotal={activeUser.careerXp}
+                  claimedArtTier={activeUser.claimedArtTier}
                   size="xl"
                   variant="hero"
                   highlighted={!activeUser.isSupervised}
@@ -265,6 +281,49 @@ export function ProfileScreen() {
                 <Text style={styles.nextRankText}>
                   {rank.nextXp - activeUser.careerXp} XP to {rank.nextTitle}
                 </Text>
+              ) : null}
+
+              {hasPendingEvolution ? (
+                <Pressable
+                  onPress={() =>
+                    setCeremony({
+                      user: activeUser,
+                      fromTier: activeUser.claimedArtTier,
+                      toTier: nextEvolutionTier,
+                      mode: 'claim',
+                    })
+                  }
+                  style={styles.evolutionBtn}
+                  accessibilityRole="button">
+                  <Feather name="zap" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.evolutionBtnText}>
+                    Evolution Ready — Transform to Tier {nextEvolutionTier}!
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              {unlockedTransitions.length > 0 ? (
+                <View style={styles.replayRow}>
+                  {unlockedTransitions.map((t) => (
+                    <Pressable
+                      key={`${t.fromTier}-${t.toTier}`}
+                      onPress={() =>
+                        setCeremony({
+                          user: activeUser,
+                          fromTier: t.fromTier,
+                          toTier: t.toTier,
+                          mode: 'replay',
+                        })
+                      }
+                      style={styles.replayPill}
+                      accessibilityRole="button">
+                      <Feather name="play-circle" size={14} color={Colors.brandOrange} />
+                      <Text style={styles.replayPillText}>
+                        Watch T{t.fromTier} → T{t.toTier}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               ) : null}
 
               {isAvatarPickerOpen ? (
@@ -475,6 +534,7 @@ export function ProfileScreen() {
                         name={kid.name}
                         avatarKey={kid.avatarKey}
                         xpTotal={kid.careerXp}
+                        claimedArtTier={kid.claimedArtTier}
                         size="sm"
                         variant="hero"
                         showTierBadge
@@ -532,6 +592,15 @@ export function ProfileScreen() {
             await unlockDevice();
             setUnlockPinModalOpen(false);
             showSuccess('Device unlocked! You can now switch characters.');
+          }}
+        />
+
+        <EvolutionModal
+          ceremony={ceremony}
+          onClose={() => setCeremony(null)}
+          onClaim={async (userId, toTier) => {
+            await claimEvolution(userId, toTier);
+            showSuccess(`Tier ${toTier} armor equipped!`, 6000);
           }}
         />
       </SafeAreaView>
