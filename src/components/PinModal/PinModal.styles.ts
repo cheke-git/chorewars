@@ -13,12 +13,20 @@ export const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(11, 11, 74, 0.96)',
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     gap: Spacing.md,
+  },
+  fortLabel: {
+    color: Colors.brandOrange,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
   },
   title: {
     color: Colors.textPrimary,
@@ -44,9 +52,16 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 12,
   },
+  checking: {
+    color: Colors.brandOrange,
+    fontSize: Typography.label,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   error: {
     color: Colors.error,
     fontSize: Typography.label,
+    fontWeight: '700',
     textAlign: 'center',
   },
   actions: {

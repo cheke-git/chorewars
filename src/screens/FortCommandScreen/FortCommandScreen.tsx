@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CharacterPicker } from '@/components/CharacterPicker/CharacterPicker';
 import { FortBackground } from '@/components/FortBackground/FortBackground';
-import { PinModal } from '@/components/PinModal/PinModal';
+import { PinEntryCard } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import { AVATAR_PRESETS, type RecurrenceType } from '@/shared/types';
 
 import { styles } from './FortCommandScreen.styles';
@@ -35,9 +37,16 @@ export function FortCommandScreen() {
     createReward,
   } = useApp();
 
-  const [pinModalOpen, setPinModalOpen] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
+  const [isFocused, setIsFocused] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, [])
+  );
+
   const [saving, setSaving] = useState(false);
 
   // Add Task form
@@ -71,13 +80,11 @@ export function FortCommandScreen() {
 
   const runAction = async (fn: () => Promise<void>, successText: string) => {
     setSaving(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
     try {
       await fn();
-      setStatusMessage(successText);
+      showSuccess(successText);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Action failed.');
+      showError(err instanceof Error ? err.message : 'Action failed.');
     } finally {
       setSaving(false);
     }
@@ -107,29 +114,14 @@ export function FortCommandScreen() {
       <FortBackground>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.lockedCenter}>
-            <View style={styles.lockedCard}>
-              <Text style={styles.fortLabel}>{fortState.fort.name}</Text>
-              <Text style={styles.lockedTitle}>Fort Command</Text>
-              <Text style={styles.lockedDesc}>
-                Protected by your 4-digit Guardian PIN so recruits can&apos;t edit missions or
-                rewards.
-              </Text>
-              <PrimaryButton
-                label="Unlock with Guardian PIN"
-                variant="primary"
-                onPress={() => setPinModalOpen(true)}
-              />
-            </View>
+            <PinEntryCard
+              fortName={fortState.fort.name}
+              title="Fort Command"
+              subtitle="Enter your 4-digit Guardian PIN to unlock missions, areas, and rewards."
+              autoFocusTrigger={isFocused}
+              onVerify={verifyGuardianPin}
+            />
           </View>
-
-          <PinModal
-            visible={pinModalOpen}
-            onCancel={() => setPinModalOpen(false)}
-            onVerify={async (pin) => {
-              await verifyGuardianPin(pin);
-              setPinModalOpen(false);
-            }}
-          />
         </SafeAreaView>
       </FortBackground>
     );
@@ -155,9 +147,6 @@ export function FortCommandScreen() {
               <Text style={styles.lockBtnText}>Lock</Text>
             </Pressable>
           </View>
-
-          {statusMessage ? <Text style={styles.successBanner}>{statusMessage}</Text> : null}
-          {errorMessage ? <Text style={styles.errorBanner}>{errorMessage}</Text> : null}
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Add Mission</Text>

@@ -60,19 +60,6 @@ export const styles = StyleSheet.create({
     height: '100%',
     borderRadius: Radius.full,
   },
-  switchBtn: {
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  switchBtnText: {
-    color: Colors.textPrimary,
-    fontSize: Typography.caption,
-    fontWeight: '700',
-  },
   lockedBadge: {
     backgroundColor: Colors.background,
     borderWidth: 1,
@@ -85,20 +72,6 @@ export const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 11,
     fontWeight: '700',
-  },
-  banner: {
-    backgroundColor: 'rgba(34, 197, 94, 0.14)',
-    borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-  },
-  bannerText: {
-    color: Colors.success,
-    fontSize: Typography.label,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   section: {
     gap: Spacing.sm,
@@ -178,9 +151,31 @@ export const styles = StyleSheet.create({
     fontSize: Typography.label,
     fontWeight: '700',
   },
+  filterBarShell: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   filterRow: {
     gap: Spacing.sm,
     paddingVertical: 2,
+  },
+  scrollArrowBtn: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(11, 11, 74, 0.96)',
+    borderWidth: 1,
+    borderColor: Colors.brandOrange,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  scrollArrowLeft: {
+    left: 0,
+  },
+  scrollArrowRight: {
+    right: 0,
   },
   filterChip: {
     backgroundColor: Colors.surface,
@@ -234,7 +229,10 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
   },
   gridCardCooldown: {
-    opacity: 0.62,
+    borderColor: 'rgba(51, 51, 128, 0.55)',
+  },
+  gridArtDimmed: {
+    opacity: 0.55,
   },
   gridArtStage: {
     position: 'relative',
@@ -244,6 +242,19 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 6,
+  },
+  gridEditBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(0, 0, 51, 0.82)',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   gridTopOverlay: {
     position: 'absolute',
@@ -348,6 +359,36 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     paddingVertical: 7,
     alignItems: 'center',
+  },
+  gridCompletedRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  gridCooldownPillFlex: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderRadius: Radius.sm,
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridUndoBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+  },
+  gridUndoText: {
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '700',
   },
   gridCooldownText: {
     color: Colors.textMuted,

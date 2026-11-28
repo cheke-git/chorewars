@@ -11,6 +11,7 @@ import { PinModal } from '@/components/PinModal/PinModal';
 import { PrimaryButton } from '@/components/PrimaryButton/PrimaryButton';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import { getRankInfo, normalizeAvatarKey } from '@/shared/types';
 
 import { styles } from './ProfileScreen.styles';
@@ -42,10 +43,10 @@ export function ProfileScreen() {
   const [inviteUserSelection, setInviteUserSelection] = useState<Record<string, string[]>>({});
   const [unlockPinModalOpen, setUnlockPinModalOpen] = useState(false);
 
+  const { showSuccess, showError } = useToast();
+
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!session || !activeUser) {
     return null;
@@ -65,13 +66,11 @@ export function ProfileScreen() {
 
   const runAction = async (fn: () => Promise<void>, successText: string) => {
     setSaving(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
     try {
       await fn();
-      setStatusMessage(successText);
+      showSuccess(successText);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong.');
+      showError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setSaving(false);
     }
@@ -289,9 +288,6 @@ export function ProfileScreen() {
                 </View>
               ) : null}
             </View>
-
-            {statusMessage ? <Text style={styles.successBanner}>{statusMessage}</Text> : null}
-            {errorMessage ? <Text style={styles.errorBanner}>{errorMessage}</Text> : null}
 
             {/* Pending Invitations (Guardian / Full Account only) */}
             {isActingAsGuardian && session.pendingInvitations.length > 0 ? (
@@ -535,7 +531,7 @@ export function ProfileScreen() {
             await verifyGuardianPin(pin);
             await unlockDevice();
             setUnlockPinModalOpen(false);
-            setStatusMessage('Device unlocked! You can now switch characters.');
+            showSuccess('Device unlocked! You can now switch characters.');
           }}
         />
       </SafeAreaView>

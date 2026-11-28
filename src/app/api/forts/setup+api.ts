@@ -20,6 +20,23 @@ const supervisedMemberSchema = z.object({
   avatarKey: z.string().min(1).default('kid-male'),
 });
 
+const starterTaskSchema = z.object({
+  areaTempKey: z.string().nullable().default(null),
+  title: z.string().trim().min(1).max(80),
+  categoryKey: z.string().min(1).default('custom'),
+  xp: z.number().int().min(1).max(500),
+  recurrenceType: z
+    .enum(['daily', 'cooldown', 'weekly', 'monthly', 'one_off', 'on_demand'])
+    .default('daily'),
+  cooldownDays: z.number().int().min(1).max(30).nullable().default(null),
+});
+
+const starterRewardSchema = z.object({
+  title: z.string().trim().max(80).optional(),
+  targetXp: z.number().int().min(5).max(5000),
+  excludeAdults: z.boolean().default(true),
+});
+
 const setupSchema = z.object({
   name: z.string().trim().min(2, 'Give your Fort a name.').max(60),
   homeType: z.enum(['house', 'apartment', 'studio']),
@@ -35,13 +52,9 @@ const setupSchema = z.object({
     .regex(/^\d{4}$/, 'PIN must be exactly 4 digits.')
     .optional(),
   supervisedMembers: z.array(supervisedMemberSchema).default([]),
-  starterReward: z
-    .object({
-      title: z.string().trim().max(80).optional(),
-      targetXp: z.number().int().min(5).max(5000),
-      excludeAdults: z.boolean().default(true),
-    })
-    .optional(),
+  starterTasks: z.array(starterTaskSchema).optional(),
+  starterReward: starterRewardSchema.optional(),
+  starterRewards: z.array(starterRewardSchema).optional(),
 });
 
 export async function POST(request: Request) {
@@ -160,9 +173,10 @@ export async function POST(request: Request) {
       });
     }
 
-    if (plan.tasks.length > 0) {
+    const tasksToInsert = data.starterTasks ?? plan.tasks;
+    if (tasksToInsert.length > 0) {
       await db.insert(tasks).values(
-        plan.tasks.map((task) => ({
+        tasksToInsert.map((task) => ({
           fortId: createdFort.id,
           areaId: task.areaTempKey ? (areaIdByTempKey.get(task.areaTempKey) ?? null) : null,
           title: task.title,
@@ -175,19 +189,24 @@ export async function POST(request: Request) {
       );
     }
 
-    if (data.starterReward) {
-      const excludedIds = data.starterReward.excludeAdults
-        ? fortUserRecords.filter((u) => u.isAdult).map((u) => u.id)
-        : [];
-      const allExcluded = excludedIds.length === fortUserRecords.length;
-
-      await db.insert(rewards).values({
-        fortId: createdFort.id,
-        title: data.starterReward.title?.trim() || null,
-        type: 'individual_goal',
-        targetXp: data.starterReward.targetXp,
-        excludedUserIds: allExcluded ? [] : excludedIds,
-      });
+    const rewardsToInsert =
+      data.starterRewards ?? (data.starterReward ? [data.starterReward] : []);
+    if (rewardsToInsert.length > 0) {
+      await db.insert(rewards).values(
+        rewardsToInsert.map((reward) => {
+          const excludedIds = reward.excludeAdults
+            ? fortUserRecords.filter((u) => u.isAdult).map((u) => u.id)
+            : [];
+          const allExcluded = excludedIds.length === fortUserRecords.length;
+          return {
+            fortId: createdFort.id,
+            title: reward.title?.trim() || null,
+            type: 'individual_goal',
+            targetXp: reward.targetXp,
+            excludedUserIds: allExcluded ? [] : excludedIds,
+          };
+        })
+      );
     }
 
     const [fortState, session] = await Promise.all([

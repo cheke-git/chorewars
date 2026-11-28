@@ -1,9 +1,11 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
 import { AppProvider, useApp } from '@/context/AppContext';
+import { ToastProvider } from '@/context/ToastContext';
 
 function AuthGuard() {
   const { isHydrating, token, session, fortState, lockedUserId } = useApp();
@@ -47,15 +49,19 @@ function AuthGuard() {
 
 export default function RootLayout() {
   return (
-    <AppProvider>
-      <AuthGuard />
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
-        }}
-      />
-    </AppProvider>
+    <SafeAreaProvider>
+      <ToastProvider>
+        <AppProvider>
+          <AuthGuard />
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.background },
+            }}
+          />
+        </AppProvider>
+      </ToastProvider>
+    </SafeAreaProvider>
   );
 }

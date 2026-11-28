@@ -37,11 +37,24 @@ export interface SetupFortPayload {
     isAdult: boolean;
     avatarKey: string;
   }[];
+  starterTasks?: {
+    areaTempKey: string | null;
+    title: string;
+    categoryKey: string;
+    xp: number;
+    recurrenceType: RecurrenceType;
+    cooldownDays: number | null;
+  }[];
   starterReward?: {
     title?: string;
     targetXp: number;
     excludeAdults: boolean;
   };
+  starterRewards?: {
+    title?: string;
+    targetXp: number;
+    excludeAdults: boolean;
+  }[];
 }
 
 export interface CreateTaskPayload {

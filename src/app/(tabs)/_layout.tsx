@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Image, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { resolveCharacterPortrait } from '@/constants/characterArt';
 import { getRankInfo } from '@/constants/ranks';
@@ -8,6 +9,8 @@ import { useApp } from '@/context/AppContext';
 
 export default function TabsLayout() {
   const { session, activeUser, activeMember } = useApp();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 8);
   const isActiveUserCoch = Boolean(activeUser && !activeUser.isSupervised && activeMember?.role === 'coch');
   const pendingCount =
     session && activeUser && !activeUser.isSupervised ? session.pendingInvitations.length : 0;
@@ -25,8 +28,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
-          height: 64,
-          paddingBottom: 8,
+          height: 56 + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 6,
         },
         tabBarActiveTintColor: Colors.brandOrange,
